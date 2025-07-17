@@ -23,7 +23,7 @@ jobs:
           node-version: '20'
 
       - name: Install Dependencies
-        run: bahmutov/npm-install@v1
+        uses: bahmutov/npm-install@v1
 
       - name: Run Tests
         run: npm test
