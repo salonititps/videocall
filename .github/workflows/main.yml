@@ -42,6 +42,14 @@ jobs:
           cd android
           ./gradlew assembleDebug
 
+      - name: Build Release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
       - name: Upload Debug APK to Firebase (Debug Testers)
         run: |
           firebase appdistribution:distribute android/app/build/outputs/apk/debug/app-debug.apk \
