@@ -26,19 +26,19 @@
 // });
 
 //Pull to refresh animated
-import React from 'react';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
-import AnimatedPullToRefresh from './src/AnimatedPullToRefresh'; // or your root navigator
+// import React from 'react';
+// import {SafeAreaProvider} from 'react-native-safe-area-context';
+// import AnimatedPullToRefresh from './src/AnimatedPullToRefresh'; // or your root navigator
 
-const App = () => {
-  return (
-    <SafeAreaProvider>
-      <AnimatedPullToRefresh />
-    </SafeAreaProvider>
-  );
-};
+// const App = () => {
+//   return (
+//     <SafeAreaProvider>
+//       <AnimatedPullToRefresh />
+//     </SafeAreaProvider>
+//   );
+// };
 
-export default App;
+// export default App;
 
 // Swpie to delete cards
 // import React, {useRef, useState} from 'react';
@@ -159,3 +159,16 @@ export default App;
 //     backgroundColor: '#f9f9f9',
 //   },
 // });
+
+import {View, Text} from 'react-native';
+import React from 'react';
+
+const App = () => {
+  return (
+    <View>
+      <Text>App</Text>
+    </View>
+  );
+};
+
+export default App;
