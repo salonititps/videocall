@@ -164,6 +164,7 @@ import {View, Text} from 'react-native';
 import React from 'react';
 
 const App = () => {
+  console.log('hello');
   return (
     <View>
       <Text>App</Text>
