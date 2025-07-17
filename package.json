@@ -12,6 +12,7 @@
   "dependencies": {
     "@notifee/react-native": "^9.1.8",
     "@react-native-community/netinfo": "^11.4.1",
+    "@react-native-firebase/app": "^22.4.0",
     "@stream-io/react-native-webrtc": "^125.0.8",
     "@stream-io/video-react-native-sdk": "^1.18.0",
     "lottie-react-native": "^7.2.4",
