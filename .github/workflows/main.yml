@@ -102,6 +102,27 @@ jobs:
           echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}" >> android/gradle.properties
           echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}" >> android/gradle.properties
 
+      # 🔐 Setup Release Keystore and Gradle Properties
+      - name: Setup Release Keystore
+        run: |
+          mkdir -p android/app
+          echo "📦 Creating release.keystore..."
+          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+
+          if [ -f android/app/release.keystore ]; then
+            echo "✅ release.keystore created successfully."
+            echo "📁 Location: android/app/release.keystore"
+            echo "📏 Size: $(du -h android/app/release.keystore | cut -f1)"
+          else
+            echo "❌ Failed to create release.keystore!"
+          fi
+
+          echo "📝 Writing gradle.properties values..."
+          echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}" >> android/gradle.properties
+          echo "RELEASE_KEY_PASSWORD=********"  # Masked
+          echo "RELEASE_STORE_PASSWORD=********"  # Masked
+          echo "✅ gradle.properties configured."
+
       # - name: Build Debug APK
       #   run: |
       #     cd android
