@@ -114,12 +114,27 @@ jobs:
 
           echo "📦 Updated VERSION_CODE: $NEXT_VERSION"
 
-      - name: Commit updated versionCode to Git
+      # - name: Commit updated versionCode to Git
+      #   run: |
+      #     git config --global user.name 'salonititps'
+      #     git config --global user.email 'salonit@itpathsolutions.com'
+      #     git add android/gradle.properties
+      #     git commit -m "⬆️ CI: Auto-increment versionCode to $VERSION_CODE [skip ci]" || echo "No changes to commit."
+      #     git push origin HEAD:${{ github.ref }}
+
+      - name: Commit only VERSION_CODE and VERSION_NAME to Git
         run: |
           git config --global user.name 'salonititps'
           git config --global user.email 'salonit@itpathsolutions.com'
+
+          # Extract only the version lines from the full gradle.properties
+          grep -E '^VERSION_(CODE|NAME)=' android/gradle.properties > android/version-only.properties
+
+          # Overwrite original gradle.properties with version-only content for commit
+          mv android/version-only.properties android/gradle.properties
+
           git add android/gradle.properties
-          git commit -m "⬆️ CI: Auto-increment versionCode to $VERSION_CODE [skip ci]" || echo "No changes to commit."
+          git commit -m "⬆️ CI: Auto-increment VERSION_CODE to $VERSION_CODE [skip ci]" || echo "No changes to commit."
           git push origin HEAD:${{ github.ref }}
 
   # build-android:
