@@ -53,7 +53,76 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      # Setup your .env
+      # # Setup your .env
+      # - name: Setup .env file
+      #   run: |
+      #     echo "Selected environment: $ENVIRONMENT"
+
+      #     if [ "$ENVIRONMENT" = "production" ]; then
+      #       echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
+      #       echo ".env file configured for production."
+      #     elif [ "$ENVIRONMENT" = "staging" ]; then
+      #       echo "${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
+      #       echo ".env file configured for staging."
+      #     else
+      #       echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
+      #       echo ".env file configured for development."
+      #     fi
+      #     # Only print non-sensitive values here
+      #     grep -E '^(ENV|BASE_URL)=' .env || echo "No public .env variables found."
+      #   env:
+      #     ENVIRONMENT: ${{ github.event.inputs.environment }}
+
+      # # Add debug.keystore
+      # - name: Setup Debug Keystore
+      #   run: |
+      #     mkdir -p android/app
+      #     echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > android/app/debug.keystore
+
+      # # Add release.keystore
+      # - name: Setup Release Keystore
+      #   run: |
+      #     mkdir -p android/app
+      #     echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/app/videocall.keystore
+
+      #     if [ -f android/app/videocall.keystore ]; then
+      #       echo "videocall.keystore created: $(du -h android/app/videocall.keystore | cut -f1)"
+      #     else
+      #       echo "Failed to create videocall.keystore!"
+      #       exit 1
+      #     fi
+
+      #     {
+      #       echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}"
+      #       echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}"
+      #       echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}"
+      #     } >> android/gradle.properties
+
+      # # Auto increment version code
+      # - name: Auto-increment versionCode
+      #   run: |
+      #     FILE="android/gradle.properties"
+
+      #     # Extract current version code
+      #     CURRENT_VERSION=$(grep VERSION_CODE "$FILE" | cut -d'=' -f2)
+
+      #     # Increment version code
+      #     NEXT_VERSION=$((CURRENT_VERSION + 1))
+
+      #     # Replace the version code in gradle.properties
+      #     sed -i.bak "s/VERSION_CODE=.*/VERSION_CODE=$NEXT_VERSION/" "$FILE"
+
+      #     echo "📦 Updated VERSION_CODE: $NEXT_VERSION"
+
+      # - name: Commit updated versionCode to Git
+      #   run: |
+      #     git config --global user.name 'salonititps'
+      #     git config --global user.email 'salonit@itpathsolutions.com'
+      #     git add android/gradle.properties
+      #     git commit -m "⬆️ CI: Auto-increment versionCode to $VERSION_CODE [skip ci]" || echo "No changes to commit."
+      #     git push origin HEAD:${{ github.ref }}
+
+      # Setup .env file
       - name: Setup .env file
         run: |
           echo "Selected environment: $ENVIRONMENT"
@@ -68,7 +137,7 @@ jobs:
             echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
             echo ".env file configured for development."
           fi
-          # Only print non-sensitive values here
+
           grep -E '^(ENV|BASE_URL)=' .env || echo "No public .env variables found."
         env:
           ENVIRONMENT: ${{ github.event.inputs.environment }}
@@ -92,48 +161,38 @@ jobs:
             exit 1
           fi
 
-          {
-            echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}"
-            echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}"
-            echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}"
-          } >> android/gradle.properties
-
-      # Auto increment version code
-      - name: Auto-increment versionCode
+      # Auto-increment versionCode and set versionName
+      - name: Update VERSION_CODE and VERSION_NAME
+        id: versioning
         run: |
           FILE="android/gradle.properties"
 
-          # Extract current version code
-          CURRENT_VERSION=$(grep VERSION_CODE "$FILE" | cut -d'=' -f2)
-
-          # Increment version code
+          # Read current VERSION_CODE
+          CURRENT_VERSION=$(grep '^VERSION_CODE=' "$FILE" | cut -d'=' -f2)
           NEXT_VERSION=$((CURRENT_VERSION + 1))
 
-          # Replace the version code in gradle.properties
-          sed -i.bak "s/VERSION_CODE=.*/VERSION_CODE=$NEXT_VERSION/" "$FILE"
+          # Replace values without changing other lines
+          sed -i "s/^VERSION_CODE=.*/VERSION_CODE=$NEXT_VERSION/" "$FILE"
+          sed -i "s/^VERSION_NAME=.*/VERSION_NAME=1.0.0/" "$FILE"
 
-          echo "📦 Updated VERSION_CODE: $NEXT_VERSION"
+          echo "VERSION_CODE=$NEXT_VERSION" >> $GITHUB_ENV
+          echo "Updated VERSION_CODE to $NEXT_VERSION and VERSION_NAME to 1.0.0"
 
-      # - name: Commit updated versionCode to Git
-      #   run: |
-      #     git config --global user.name 'salonititps'
-      #     git config --global user.email 'salonit@itpathsolutions.com'
-      #     git add android/gradle.properties
-      #     git commit -m "⬆️ CI: Auto-increment versionCode to $VERSION_CODE [skip ci]" || echo "No changes to commit."
-      #     git push origin HEAD:${{ github.ref }}
-
+      # Commit version updates
       - name: Commit updated VERSION_CODE and VERSION_NAME to Git
         run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-
-          # Update version values in-place without changing other content
-          sed -i "s/^VERSION_CODE=.*/VERSION_CODE=$VERSION_CODE/" android/gradle.properties
-          sed -i "s/^VERSION_NAME=.*/VERSION_NAME=1.0.0/" android/gradle.properties
+          git config --global user.name 'salonititps'
+          git config --global user.email 'salonit@itpathsolutions.com'
 
           git add android/gradle.properties
           git commit -m "⬆️ CI: Auto-increment VERSION_CODE to $VERSION_CODE [skip ci]" || echo "No changes to commit."
           git push origin HEAD:${{ github.ref }}
+
+        # Set signing secrets as environment variables (used in build.gradle)
+        env:
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
 
   # build-android:
   #   name: Build Android APKs
