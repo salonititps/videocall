@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "167074286498",
+    "project_id": "videocall-cicd",
+    "storage_bucket": "videocall-cicd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:167074286498:android:34b05a46f0dbbfe41700fb",
+        "android_client_info": {
+          "package_name": "com.videocalling"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlx3m8RtWNl-nOxa7sCGoOCNKuA4C-Qws"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
