@@ -160,9 +160,11 @@ jobs:
           ./gradlew assembleDebug
 
       - name: Build Release APK
-        run: |
-          cd android
-          ./gradlew assembleRelease
+        run: ./android/gradlew assembleRelease
+        env:
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
 
       - name: Install Firebase CLI
         if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
