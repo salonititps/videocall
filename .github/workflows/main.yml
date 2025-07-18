@@ -53,75 +53,6 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      # # Setup your .env
-      # - name: Setup .env file
-      #   run: |
-      #     echo "Selected environment: $ENVIRONMENT"
-
-      #     if [ "$ENVIRONMENT" = "production" ]; then
-      #       echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
-      #       echo ".env file configured for production."
-      #     elif [ "$ENVIRONMENT" = "staging" ]; then
-      #       echo "${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
-      #       echo ".env file configured for staging."
-      #     else
-      #       echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
-      #       echo ".env file configured for development."
-      #     fi
-      #     # Only print non-sensitive values here
-      #     grep -E '^(ENV|BASE_URL)=' .env || echo "No public .env variables found."
-      #   env:
-      #     ENVIRONMENT: ${{ github.event.inputs.environment }}
-
-      # # Add debug.keystore
-      # - name: Setup Debug Keystore
-      #   run: |
-      #     mkdir -p android/app
-      #     echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > android/app/debug.keystore
-
-      # # Add release.keystore
-      # - name: Setup Release Keystore
-      #   run: |
-      #     mkdir -p android/app
-      #     echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/app/videocall.keystore
-
-      #     if [ -f android/app/videocall.keystore ]; then
-      #       echo "videocall.keystore created: $(du -h android/app/videocall.keystore | cut -f1)"
-      #     else
-      #       echo "Failed to create videocall.keystore!"
-      #       exit 1
-      #     fi
-
-      #     {
-      #       echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}"
-      #       echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}"
-      #       echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}"
-      #     } >> android/gradle.properties
-
-      # # Auto increment version code
-      # - name: Auto-increment versionCode
-      #   run: |
-      #     FILE="android/gradle.properties"
-
-      #     # Extract current version code
-      #     CURRENT_VERSION=$(grep VERSION_CODE "$FILE" | cut -d'=' -f2)
-
-      #     # Increment version code
-      #     NEXT_VERSION=$((CURRENT_VERSION + 1))
-
-      #     # Replace the version code in gradle.properties
-      #     sed -i.bak "s/VERSION_CODE=.*/VERSION_CODE=$NEXT_VERSION/" "$FILE"
-
-      #     echo "📦 Updated VERSION_CODE: $NEXT_VERSION"
-
-      # - name: Commit updated versionCode to Git
-      #   run: |
-      #     git config --global user.name 'salonititps'
-      #     git config --global user.email 'salonit@itpathsolutions.com'
-      #     git add android/gradle.properties
-      #     git commit -m "⬆️ CI: Auto-increment versionCode to $VERSION_CODE [skip ci]" || echo "No changes to commit."
-      #     git push origin HEAD:${{ github.ref }}
-
       # Setup .env file
       - name: Setup .env file
         run: |
@@ -194,54 +125,54 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
           RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
 
-  # build-android:
-  #   name: Build Android APKs
-  #   runs-on: ubuntu-latest
-  #   needs: prepare-android
+  build-android:
+    name: Build Android APKs
+    runs-on: ubuntu-latest
+    needs: prepare-android
 
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-  #     - name: Build Debug APK
-  #       run: |
-  #         cd android
-  #         ./gradlew assembleDebug
+      - name: Build Debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug
 
-  #     - name: Build Release APK
-  #       run: |
-  #         cd android
-  #         ./gradlew assembleRelease
+      - name: Build Release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease
 
-  #     - name: Install Firebase CLI
-  #       if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
-  #       run: npm install -g firebase-tools
+      - name: Install Firebase CLI
+        if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+        run: npm install -g firebase-tools
 
-  #     - name: Upload Debug APK to Firebase (Debug Testers)
-  #       if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
-  #       run: |
-  #         firebase appdistribution:distribute android/app/build/outputs/apk/debug/app-debug.apk \
-  #           --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
-  #           --token ${{ secrets.FIREBASE_TOKEN }} \
-  #           --groups debug-testers \
-  #           --release-notes "Debug build from GitHub Actions for ${{ github.event.inputs.environment }}"
+      - name: Upload Debug APK to Firebase (Debug Testers)
+        if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+        run: |
+          firebase appdistribution:distribute android/app/build/outputs/apk/debug/app-debug.apk \
+            --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
+            --token ${{ secrets.FIREBASE_TOKEN }} \
+            --groups debug-testers \
+            --release-notes "Debug build from GitHub Actions for ${{ github.event.inputs.environment }}"
 
-  #     - name: Upload Release APK to Firebase (Release Testers)
-  #       if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
-  #       run: |
-  #         firebase appdistribution:distribute android/app/build/outputs/apk/release/app-release.apk \
-  #           --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
-  #           --token ${{ secrets.FIREBASE_TOKEN }} \
-  #           --groups release-testers \
-  #           --release-notes "Release build from GitHub Actions for ${{ github.event.inputs.environment }}"
+      - name: Upload Release APK to Firebase (Release Testers)
+        if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+        run: |
+          firebase appdistribution:distribute android/app/build/outputs/apk/release/app-release.apk \
+            --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
+            --token ${{ secrets.FIREBASE_TOKEN }} \
+            --groups release-testers \
+            --release-notes "Release build from GitHub Actions for ${{ github.event.inputs.environment }}"
 
-  #     - name: Upload APK Artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: APKs
-  #         path: |
-  #           android/app/build/outputs/apk/debug/app-debug.apk
-  #           android/app/build/outputs/apk/release/app-release.apk
+      - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: APKs
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/apk/release/app-release.apk
 
   # build-ios:
   #   name: iOS CI/CD
