@@ -127,9 +127,9 @@ jobs:
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
 
-          # Update only the VERSION_CODE and VERSION_NAME lines in gradle.properties
-          sed -i.bak "s/^VERSION_CODE=.*/VERSION_CODE=$VERSION_CODE/" android/gradle.properties
-          sed -i.bak "s/^VERSION_NAME=.*/VERSION_NAME=1.0.0/" android/gradle.properties
+          # Update version values in-place without changing other content
+          sed -i "s/^VERSION_CODE=.*/VERSION_CODE=$VERSION_CODE/" android/gradle.properties
+          sed -i "s/^VERSION_NAME=.*/VERSION_NAME=1.0.0/" android/gradle.properties
 
           git add android/gradle.properties
           git commit -m "⬆️ CI: Auto-increment VERSION_CODE to $VERSION_CODE [skip ci]" || echo "No changes to commit."
