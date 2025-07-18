@@ -50,15 +50,14 @@ jobs:
         run: |
           echo "Selected environment: $ENVIRONMENT"
           if [ "$ENVIRONMENT" = "production" ]; then
-            echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
+            echo "Configuration of production ${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
           elif [ "$ENVIRONMENT" = "staging" ]; then
-            echo "${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
+            echo "Configuration of staging ${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
           else
-            echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
+            echo "Configuration of development ${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
           fi
         env:
           ENVIRONMENT: ${{ github.event.inputs.environment }}
-
 
       # 🔐 Add debug.keystore
       - name: Setup Debug Keystore
