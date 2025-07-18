@@ -59,36 +59,10 @@ jobs:
             echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
             echo ".env file configured for development."
           fi
-          echo "Displaying safe .env variables:"
           # Only print non-sensitive values here
           grep -E '^(ENV|BASE_URL)=' .env || echo "No public .env variables found."
         env:
           ENVIRONMENT: ${{ github.event.inputs.environment }}
-
-      # - name: 🔐 Setup and verify .env file
-      #   run: |
-      #     echo "🔧 Selected environment: $ENVIRONMENT"
-
-      #     case "$ENVIRONMENT" in
-      #       production)
-      #         echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
-      #         echo "✅ .env file configured for production."
-      #         ;;
-      #       staging)
-      #         echo "${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
-      #         echo "✅ .env file configured for staging."
-      #         ;;
-      #       *)
-      #         echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
-      #         echo "✅ .env file configured for development."
-      #         ;;
-      #     esac
-
-      #     echo "🔍 Displaying safe .env variables:"
-      #     # Only print non-sensitive values here
-      #     grep -E '^(ENV|BASE_URL)=' .env || echo "No public .env variables found."
-      #   env:
-      #     ENVIRONMENT: ${{ github.event.inputs.environment }}
 
       # 🔐 Add debug.keystore
       - name: Setup Debug Keystore
@@ -100,7 +74,7 @@ jobs:
       - name: Setup Release Keystore
         run: |
           mkdir -p android/app
-          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/app/videocall.keystore
           echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}" >> android/gradle.properties
           echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}" >> android/gradle.properties
           echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}" >> android/gradle.properties
@@ -110,14 +84,14 @@ jobs:
         run: |
           mkdir -p android/app
           echo "📦 Creating release.keystore..."
-          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/app/videocall.keystore
 
           if [ -f android/app/release.keystore ]; then
-            echo "✅ release.keystore created successfully."
-            echo "📁 Location: android/app/release.keystore"
-            echo "📏 Size: $(du -h android/app/release.keystore | cut -f1)"
+            echo "✅ videocall.keystore created successfully."
+            echo "📁 Location: android/app/videocall.keystore"
+            echo "📏 Size: $(du -h android/app/videocall.keystore | cut -f1)"
           else
-            echo "❌ Failed to create release.keystore!"
+            echo "❌ Failed to create videocall.keystore!"
           fi
 
           echo "📝 Writing gradle.properties values..."
