@@ -267,6 +267,16 @@ jobs:
       - name: Build Debug APK
         run: ./android/gradlew assembleDebug
 
+      - name: Setup Debug Keystore
+        run: |
+          mkdir -p android/app
+          echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > android/app/debug.keystore
+
+      - name: Setup Release Keystore
+        run: |
+          mkdir -p android/app
+          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/app/videocall.keystore
+
       - name: Build Release APK
         run: ./android/gradlew assembleRelease
         env:
