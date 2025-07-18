@@ -114,7 +114,7 @@ jobs:
           git config --global user.name 'salonititps'
           git config --global user.email 'salonit@itpathsolutions.com'
           git add android/gradle.properties
-          git commit -m "⬆️ CI: Auto-increment VERSION_CODE to $VERSION_CODE [skip ci]" || echo "No changes to commit."
+          git commit -m "CI: Auto-increment VERSION_CODE to $VERSION_CODE [skip ci]" || echo "No changes to commit."
           git push origin HEAD:${{ github.ref }}
 
       - name: Build Debug APK
@@ -157,77 +157,77 @@ jobs:
             android/app/build/outputs/apk/debug/app-debug.apk
             android/app/build/outputs/apk/release/app-release.apk
 
-  # build-ios:
-  #   name: iOS CI/CD
-  #   runs-on: macos-latest
-  #   needs: build-android
+  build-ios:
+    name: iOS CI/CD
+    runs-on: macos-latest
+    needs: build-android
 
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-  #     - name: Set up Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '20'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-  #     - name: Install Dependencies
-  #       uses: bahmutov/npm-install@v1
+      - name: Install Dependencies
+        uses: bahmutov/npm-install@v1
 
-  #     # Set up Ruby (needed for CocoaPods)
-  #     - name: Set up Ruby
-  #       uses: ruby/setup-ruby@v1
-  #       with:
-  #         ruby-version: '3.2'
+      # Set up Ruby (needed for CocoaPods)
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
 
-  #     - name: Install CocoaPods
-  #       run: sudo gem install cocoapods
+      - name: Install CocoaPods
+        run: sudo gem install cocoapods
 
-  #     # Set up .env file
-  #     - name: Setup .env file
-  #       run: |
-  #         echo "Selected environment: $ENVIRONMENT"
+      # Set up .env file
+      - name: Setup .env file
+        run: |
+          echo "Selected environment: $ENVIRONMENT"
 
-  #         if [ "$ENVIRONMENT" = "production" ]; then
-  #           echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
-  #           echo ".env file configured for production."
-  #         elif [ "$ENVIRONMENT" = "staging" ]; then
-  #           echo "${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
-  #           echo ".env file configured for staging."
-  #         else
-  #           echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
-  #           echo ".env file configured for development."
-  #         fi
-  #         grep -E '^(ENV|BASE_URL)=' .env || echo "No public .env variables found."
-  #       env:
-  #         ENVIRONMENT: ${{ github.event.inputs.environment }}
+          if [ "$ENVIRONMENT" = "production" ]; then
+            echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
+            echo ".env file configured for production."
+          elif [ "$ENVIRONMENT" = "staging" ]; then
+            echo "${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
+            echo ".env file configured for staging."
+          else
+            echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
+            echo ".env file configured for development."
+          fi
+          grep -E '^(ENV|BASE_URL)=' .env || echo "No public .env variables found."
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
 
-  #     # Optional iOS code signing (if required for real device or App Store build)
-  #     - name: Setup iOS Signing (Optional)
-  #       if: env.ENVIRONMENT != 'dev'
-  #       run: |
-  #         mkdir -p ~/certs
+      # Optional iOS code signing (if required for real device or App Store build)
+      - name: Setup iOS Signing (Optional)
+        if: env.ENVIRONMENT != 'dev'
+        run: |
+          mkdir -p ~/certs
 
-  #         echo "${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}" | base64 -d > ~/certs/profile.mobileprovision
-  #         echo "${{ secrets.IOS_CERT_P12_BASE64 }}" | base64 -d > ~/certs/cert.p12
-  #         echo "${{ secrets.IOS_AUTH_KEY_BASE64 }}" | base64 -d > ~/certs/AuthKey.p8
+          echo "${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}" | base64 -d > ~/certs/profile.mobileprovision
+          echo "${{ secrets.IOS_CERT_P12_BASE64 }}" | base64 -d > ~/certs/cert.p12
+          echo "${{ secrets.IOS_AUTH_KEY_BASE64 }}" | base64 -d > ~/certs/AuthKey.p8
 
-  #         echo "iOS signing files decoded."
+          echo "iOS signing files decoded."
 
-  #     - name: Install Pods
-  #       run: cd ios && pod install
+      - name: Install Pods
+        run: cd ios && pod install
 
-  #     - name: Build iOS Debug App (Simulator)
-  #       run: |
-  #         cd ios
-  #         xcodebuild -workspace YourApp.xcworkspace \
-  #           -scheme YourApp \
-  #           -sdk iphonesimulator \
-  #           -configuration Debug \
-  #           build
+      - name: Build iOS Debug App (Simulator)
+        run: |
+          cd ios
+          xcodebuild -workspace YourApp.xcworkspace \
+            -scheme YourApp \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            build
 
-  #     - name: Upload iOS Build Artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: iOS Build (Simulator)
-  #         path: ios/build
+      - name: Upload iOS Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: iOS Build (Simulator)
+          path: ios/build
