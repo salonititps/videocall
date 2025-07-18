@@ -27,146 +27,8 @@ on:
           - 'true'
           - 'false'
 
-# jobs:
-#   prepare-android:
-#     name: Android CI/CD
-#     runs-on: ubuntu-latest
-
-#     steps:
-#       - name: Checkout Repository
-#         uses: actions/checkout@v4
-
-#       - name: Set up Node.js
-#         uses: actions/setup-node@v4
-#         with:
-#           node-version: '20'
-
-#       - name: Install Dependencies
-#         uses: bahmutov/npm-install@v1
-
-#       - name: Set up Java 17
-#         uses: actions/setup-java@v4
-#         with:
-#           distribution: 'temurin'
-#           java-version: '17'
-
-#       - name: Set up Android SDK
-#         uses: android-actions/setup-android@v3
-
-#       # Setup .env file
-#       - name: Setup .env file
-#         run: |
-#           echo "Selected environment: $ENVIRONMENT"
-
-#           if [ "$ENVIRONMENT" = "production" ]; then
-#             echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
-#             echo ".env file configured for production."
-#           elif [ "$ENVIRONMENT" = "staging" ]; then
-#             echo "${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
-#             echo ".env file configured for staging."
-#           else
-#             echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
-#             echo ".env file configured for development."
-#           fi
-
-#           grep -E '^(ENV|BASE_URL)=' .env || echo "No public .env variables found."
-#         env:
-#           ENVIRONMENT: ${{ github.event.inputs.environment }}
-
-#       # Add debug.keystore
-#       - name: Setup Debug Keystore
-#         run: |
-#           mkdir -p android/app
-#           echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > android/app/debug.keystore
-
-#       # Add release.keystore
-#       - name: Setup Release Keystore
-#         run: |
-#           mkdir -p android/app
-#           echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/app/videocall.keystore
-
-#           if [ -f android/app/videocall.keystore ]; then
-#             echo "videocall.keystore created: $(du -h android/app/videocall.keystore | cut -f1)"
-#           else
-#             echo "Failed to create videocall.keystore!"
-#             exit 1
-#           fi
-
-#       # Auto-increment versionCode and set versionName
-#       - name: Update VERSION_CODE and VERSION_NAME
-#         id: versioning
-#         run: |
-#           FILE="android/gradle.properties"
-
-#           # Read current VERSION_CODE
-#           CURRENT_VERSION=$(grep '^VERSION_CODE=' "$FILE" | cut -d'=' -f2)
-#           NEXT_VERSION=$((CURRENT_VERSION + 1))
-
-#           # Replace values without changing other lines
-#           sed -i "s/^VERSION_CODE=.*/VERSION_CODE=$NEXT_VERSION/" "$FILE"
-#           sed -i "s/^VERSION_NAME=.*/VERSION_NAME=1.0.0/" "$FILE"
-
-#           echo "VERSION_CODE=$NEXT_VERSION" >> $GITHUB_ENV
-#           echo "Updated VERSION_CODE to $NEXT_VERSION and VERSION_NAME to 1.0.0"
-
-#       # Commit version updates
-#       - name: Commit updated VERSION_CODE and VERSION_NAME to Git
-#         run: |
-#           git config --global user.name 'salonititps'
-#           git config --global user.email 'salonit@itpathsolutions.com'
-
-#           git add android/gradle.properties
-#           git commit -m "⬆️ CI: Auto-increment VERSION_CODE to $VERSION_CODE [skip ci]" || echo "No changes to commit."
-#           git push origin HEAD:${{ github.ref }}
-
-#         # Set signing secrets as environment variables (used in build.gradle)
-#         env:
-#           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-#           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-#           RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
-
-#   build-android:
-#     name: Build Android APKs
-#     runs-on: ubuntu-latest
-#     needs: prepare-android
-
-#     steps:
-#       - name: Checkout Repository
-#         uses: actions/checkout@v4
-
-#       - name: Set up Node.js
-#         uses: actions/setup-node@v4
-#         with:
-#           node-version: '20'
-
-#       - name: Install Dependencies
-#         uses: bahmutov/npm-install@v1
-
-#       - name: Set up Java 17
-#         uses: actions/setup-java@v4
-#         with:
-#           distribution: 'temurin'
-#           java-version: '17'
-
-#       - name: Set up Android SDK
-#         uses: android-actions/setup-android@v3
-
-#       - name: Checkout Repository
-#         uses: actions/checkout@v4
-
-#       - name: Build Debug APK
-#         run: |
-#           cd android
-#           ./gradlew assembleDebug
-
-#       - name: Build Release APK
-#         run: ./android/gradlew assembleRelease
-#         env:
-#           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-#           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-#           RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
 jobs:
-  prepare-android:
+  build-android:
     name: Android CI/CD
     runs-on: ubuntu-latest
 
@@ -191,28 +53,50 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      # Setup your .env
       - name: Setup .env file
         run: |
           echo "Selected environment: $ENVIRONMENT"
+
           if [ "$ENVIRONMENT" = "production" ]; then
             echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
+            echo ".env file configured for production."
           elif [ "$ENVIRONMENT" = "staging" ]; then
             echo "${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
+            echo ".env file configured for staging."
           else
             echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
+            echo ".env file configured for development."
           fi
+          # Only print non-sensitive values here
+          grep -E '^(ENV|BASE_URL)=' .env || echo "No public .env variables found."
         env:
           ENVIRONMENT: ${{ github.event.inputs.environment }}
 
+      # Add debug.keystore
       - name: Setup Debug Keystore
         run: |
           mkdir -p android/app
           echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > android/app/debug.keystore
 
+      # Add release.keystore
       - name: Setup Release Keystore
         run: |
           mkdir -p android/app
           echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/app/videocall.keystore
+
+          if [ -f android/app/videocall.keystore ]; then
+            echo "videocall.keystore created: $(du -h android/app/videocall.keystore | cut -f1)"
+          else
+            echo "Failed to create videocall.keystore!"
+            exit 1
+          fi
+
+          # {
+          #   echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}"
+          #   echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}"
+          #   echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}"
+          # } >> android/gradle.properties
 
       - name: Update VERSION_CODE and VERSION_NAME
         id: versioning
@@ -233,56 +117,15 @@ jobs:
           git commit -m "⬆️ CI: Auto-increment VERSION_CODE to $VERSION_CODE [skip ci]" || echo "No changes to commit."
           git push origin HEAD:${{ github.ref }}
 
-        env:
-          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
-
-  build-android:
-    name: Build Android APKs
-    runs-on: ubuntu-latest
-    needs: prepare-android
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Dependencies
-        uses: bahmutov/npm-install@v1
-
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Build Debug APK
-        run: ./android/gradlew assembleDebug
-
-      - name: Setup Debug Keystore
         run: |
-          mkdir -p android/app
-          echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > android/app/debug.keystore
-
-      - name: Setup Release Keystore
-        run: |
-          mkdir -p android/app
-          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/app/videocall.keystore
+          cd android
+          ./gradlew assembleDebug
 
       - name: Build Release APK
-        run: ./android/gradlew assembleRelease
-        env:
-          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+        run: |
+          cd android
+          ./gradlew assembleRelease
 
       - name: Install Firebase CLI
         if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
