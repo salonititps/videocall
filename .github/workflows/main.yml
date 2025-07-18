@@ -59,33 +59,36 @@ jobs:
             echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
             echo ".env file configured for development."
           fi
-        env:
-          ENVIRONMENT: ${{ github.event.inputs.environment }}
-
-      - name: 🔐 Setup and verify .env file
-        run: |
-          echo "🔧 Selected environment: $ENVIRONMENT"
-
-          case "$ENVIRONMENT" in
-            production)
-              echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
-              echo "✅ .env file configured for production."
-              ;;
-            staging)
-              echo "${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
-              echo "✅ .env file configured for staging."
-              ;;
-            *)
-              echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
-              echo "✅ .env file configured for development."
-              ;;
-          esac
-
-          echo "🔍 Displaying safe .env variables:"
+          echo "Displaying safe .env variables:"
           # Only print non-sensitive values here
           grep -E '^(ENV|BASE_URL)=' .env || echo "No public .env variables found."
         env:
           ENVIRONMENT: ${{ github.event.inputs.environment }}
+
+      # - name: 🔐 Setup and verify .env file
+      #   run: |
+      #     echo "🔧 Selected environment: $ENVIRONMENT"
+
+      #     case "$ENVIRONMENT" in
+      #       production)
+      #         echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
+      #         echo "✅ .env file configured for production."
+      #         ;;
+      #       staging)
+      #         echo "${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
+      #         echo "✅ .env file configured for staging."
+      #         ;;
+      #       *)
+      #         echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
+      #         echo "✅ .env file configured for development."
+      #         ;;
+      #     esac
+
+      #     echo "🔍 Displaying safe .env variables:"
+      #     # Only print non-sensitive values here
+      #     grep -E '^(ENV|BASE_URL)=' .env || echo "No public .env variables found."
+      #   env:
+      #     ENVIRONMENT: ${{ github.event.inputs.environment }}
 
       # 🔐 Add debug.keystore
       - name: Setup Debug Keystore
