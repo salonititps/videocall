@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Select environment for build'
+        description: 'Environment for build'
         required: true
         default: 'dev'
         type: choice
@@ -18,9 +18,17 @@ on:
           - dev
           - staging
           - production
+      distribute_to_firebase:
+        description: 'Firebase App Distribution'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
 
 jobs:
-  build-android:
+  prepare-android:
     name: Android CI/CD
     runs-on: ubuntu-latest
 
@@ -45,6 +53,7 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      # Setup your .env
       - name: Setup .env file
         run: |
           echo "Selected environment: $ENVIRONMENT"
@@ -64,75 +73,175 @@ jobs:
         env:
           ENVIRONMENT: ${{ github.event.inputs.environment }}
 
-      # 🔐 Add debug.keystore
+      # Add debug.keystore
       - name: Setup Debug Keystore
         run: |
           mkdir -p android/app
           echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > android/app/debug.keystore
 
-      # 🔐 Add release.keystore & gradle properties
+      # Add release.keystore
       - name: Setup Release Keystore
         run: |
           mkdir -p android/app
-          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/app/videocall.keystore
-          echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}" >> android/gradle.properties
-          echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}" >> android/gradle.properties
-          echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}" >> android/gradle.properties
-
-      # 🔐 Setup Release Keystore and Gradle Properties
-      - name: Setup Release Keystore
-        run: |
-          mkdir -p android/app
-          echo "📦 Creating release.keystore..."
           echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/app/videocall.keystore
 
           if [ -f android/app/videocall.keystore ]; then
-            echo "✅ videocall.keystore created successfully."
-            echo "📁 Location: android/app/videocall.keystore"
-            echo "📏 Size: $(du -h android/app/videocall.keystore | cut -f1)"
+            echo "videocall.keystore created: $(du -h android/app/videocall.keystore | cut -f1)"
           else
-            echo "❌ Failed to create videocall.keystore!"
+            echo "Failed to create videocall.keystore!"
+            exit 1
           fi
 
-          echo "📝 Writing gradle.properties values..."
-          echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}" >> android/gradle.properties
-          echo "RELEASE_KEY_PASSWORD=********"  # Masked
-          echo "RELEASE_STORE_PASSWORD=********"  # Masked
-          echo "✅ gradle.properties configured."
+          {
+            echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}"
+            echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}"
+            echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}"
+          } >> android/gradle.properties
 
-      - name: Build Debug APK
+      # Auto increment version code
+      - name: Auto-increment versionCode
         run: |
-          cd android
-          ./gradlew assembleDebug
+          FILE="android/gradle.properties"
 
-      - name: Build Release APK
+          # Extract current version code
+          CURRENT_VERSION=$(grep VERSION_CODE "$FILE" | cut -d'=' -f2)
+
+          # Increment version code
+          NEXT_VERSION=$((CURRENT_VERSION + 1))
+
+          # Replace the version code in gradle.properties
+          sed -i.bak "s/VERSION_CODE=.*/VERSION_CODE=$NEXT_VERSION/" "$FILE"
+
+          echo "📦 Updated VERSION_CODE: $NEXT_VERSION"
+
+      - name: Commit updated versionCode to Git
         run: |
-          cd android
-          ./gradlew assembleRelease
+          git config --global user.name 'salonititps'
+          git config --global user.email 'salonit@itpathsolutions.com'
+          git add android/gradle.properties
+          git commit -m "⬆️ CI: Auto-increment versionCode to $VERSION_CODE [skip ci]" || echo "No changes to commit."
+          git push origin HEAD:${{ github.ref }}
 
-      # - name: Install Firebase CLI
-      #   run: npm install -g firebase-tools
+  # build-android:
+  #   name: Build Android APKs
+  #   runs-on: ubuntu-latest
+  #   needs: prepare-android
 
-      # - name: Upload Debug APK to Firebase (Debug Testers)
-      #   run: |
-      #     firebase appdistribution:distribute android/app/build/outputs/apk/debug/app-debug.apk \
-      #       --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
-      #       --token ${{ secrets.FIREBASE_TOKEN }} \
-      #       --groups debug-testers \
-      #       --release-notes "Debug build from GitHub Actions for ${{ github.event.inputs.environment }}"
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v4
 
-      # - name: Upload Release APK to Firebase (Release Testers)
-      #   run: |
-      #     firebase appdistribution:distribute android/app/build/outputs/apk/release/app-release.apk \
-      #       --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
-      #       --token ${{ secrets.FIREBASE_TOKEN }} \
-      #       --groups release-testers \
-      #       --release-notes "Release build from GitHub Actions for ${{ github.event.inputs.environment }}"
+  #     - name: Build Debug APK
+  #       run: |
+  #         cd android
+  #         ./gradlew assembleDebug
 
-      - name: Upload APK Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: APKs
-          path: |
-            android/app/build/outputs/apk/debug/app-debug.apk
-            android/app/build/outputs/apk/release/app-release.apk
+  #     - name: Build Release APK
+  #       run: |
+  #         cd android
+  #         ./gradlew assembleRelease
+
+  #     - name: Install Firebase CLI
+  #       if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+  #       run: npm install -g firebase-tools
+
+  #     - name: Upload Debug APK to Firebase (Debug Testers)
+  #       if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+  #       run: |
+  #         firebase appdistribution:distribute android/app/build/outputs/apk/debug/app-debug.apk \
+  #           --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
+  #           --token ${{ secrets.FIREBASE_TOKEN }} \
+  #           --groups debug-testers \
+  #           --release-notes "Debug build from GitHub Actions for ${{ github.event.inputs.environment }}"
+
+  #     - name: Upload Release APK to Firebase (Release Testers)
+  #       if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+  #       run: |
+  #         firebase appdistribution:distribute android/app/build/outputs/apk/release/app-release.apk \
+  #           --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
+  #           --token ${{ secrets.FIREBASE_TOKEN }} \
+  #           --groups release-testers \
+  #           --release-notes "Release build from GitHub Actions for ${{ github.event.inputs.environment }}"
+
+  #     - name: Upload APK Artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: APKs
+  #         path: |
+  #           android/app/build/outputs/apk/debug/app-debug.apk
+  #           android/app/build/outputs/apk/release/app-release.apk
+
+  # build-ios:
+  #   name: iOS CI/CD
+  #   runs-on: macos-latest
+  #   needs: build-android
+
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Set up Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
+
+  #     - name: Install Dependencies
+  #       uses: bahmutov/npm-install@v1
+
+  #     # Set up Ruby (needed for CocoaPods)
+  #     - name: Set up Ruby
+  #       uses: ruby/setup-ruby@v1
+  #       with:
+  #         ruby-version: '3.2'
+
+  #     - name: Install CocoaPods
+  #       run: sudo gem install cocoapods
+
+  #     # Set up .env file
+  #     - name: Setup .env file
+  #       run: |
+  #         echo "Selected environment: $ENVIRONMENT"
+
+  #         if [ "$ENVIRONMENT" = "production" ]; then
+  #           echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
+  #           echo ".env file configured for production."
+  #         elif [ "$ENVIRONMENT" = "staging" ]; then
+  #           echo "${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
+  #           echo ".env file configured for staging."
+  #         else
+  #           echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
+  #           echo ".env file configured for development."
+  #         fi
+  #         grep -E '^(ENV|BASE_URL)=' .env || echo "No public .env variables found."
+  #       env:
+  #         ENVIRONMENT: ${{ github.event.inputs.environment }}
+
+  #     # Optional iOS code signing (if required for real device or App Store build)
+  #     - name: Setup iOS Signing (Optional)
+  #       if: env.ENVIRONMENT != 'dev'
+  #       run: |
+  #         mkdir -p ~/certs
+
+  #         echo "${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}" | base64 -d > ~/certs/profile.mobileprovision
+  #         echo "${{ secrets.IOS_CERT_P12_BASE64 }}" | base64 -d > ~/certs/cert.p12
+  #         echo "${{ secrets.IOS_AUTH_KEY_BASE64 }}" | base64 -d > ~/certs/AuthKey.p8
+
+  #         echo "iOS signing files decoded."
+
+  #     - name: Install Pods
+  #       run: cd ios && pod install
+
+  #     - name: Build iOS Debug App (Simulator)
+  #       run: |
+  #         cd ios
+  #         xcodebuild -workspace YourApp.xcworkspace \
+  #           -scheme YourApp \
+  #           -sdk iphonesimulator \
+  #           -configuration Debug \
+  #           build
+
+  #     - name: Upload iOS Build Artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: iOS Build (Simulator)
+  #         path: ios/build
