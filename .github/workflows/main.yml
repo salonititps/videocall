@@ -45,16 +45,19 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      # 🔐 Decode .env file based on selected environment
       - name: Setup .env file
         run: |
           echo "Selected environment: $ENVIRONMENT"
+
           if [ "$ENVIRONMENT" = "production" ]; then
-            echo "Configuration of production ${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
+            echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
+            echo ".env file configured for production."
           elif [ "$ENVIRONMENT" = "staging" ]; then
-            echo "Configuration of staging ${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
+            echo "${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
+            echo ".env file configured for staging."
           else
-            echo "Configuration of development ${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
+            echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
+            echo ".env file configured for development."
           fi
         env:
           ENVIRONMENT: ${{ github.event.inputs.environment }}
