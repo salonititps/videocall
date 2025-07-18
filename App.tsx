@@ -160,10 +160,14 @@
 //   },
 // });
 
-import {View, Text} from 'react-native';
-import React from 'react';
+import {View, Text, Alert} from 'react-native';
+import React, {useEffect} from 'react';
+import {BASE_URL} from '@env';
 
 const App = () => {
+  useEffect(() => {
+    Alert.alert(BASE_URL);
+  }, []);
   return (
     <View>
       <Text>App</Text>

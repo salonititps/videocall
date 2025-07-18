@@ -7,7 +7,11 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "android:dev": "ENVFILE=.env react-native run-android",
+    "android:staging": "ENVFILE=.env.staging react-native run-android",
+    "android:prod": "ENVFILE=.env.prod react-native run-android",
+    "ios:staging": "ENVFILE=.env.staging npx react-native run-ios"
   },
   "dependencies": {
     "@notifee/react-native": "^9.1.8",
@@ -42,6 +46,7 @@
     "eslint": "^8.19.0",
     "jest": "^29.2.1",
     "prettier": "2.8.8",
+    "react-native-dotenv": "^3.4.11",
     "react-test-renderer": "19.0.0",
     "typescript": "5.0.4"
   },
