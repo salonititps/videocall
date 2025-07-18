@@ -46,15 +46,17 @@ jobs:
         uses: android-actions/setup-android@v3
 
       # 🔐 Decode .env file based on selected environment
-      - name: Setup Environment File
+      - name: Setup .env file
         run: |
-          if [ "${{ github.event.inputs.environment }}" = "production" ]; then
-            echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
-          elif [ "${{ github.event.inputs.environment }}" = "staging" ]; then
-            echo "${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
+          if [ "${ENVIRONMENT}" = "production" ]; then
+            echo "${{ secrets.ENV_PRODUCTION }}" | base64 -d > .env
+          elif [ "${ENVIRONMENT}" = "staging" ]; then
+            echo "${{ secrets.ENV_STAGING }}" | base64 -d > .env
           else
-            echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
+            echo "${{ secrets.ENV_DEV }}" | base64 -d > .env
           fi
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
 
       # 🔐 Add debug.keystore
       - name: Setup Debug Keystore
