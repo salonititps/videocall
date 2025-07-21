@@ -27,6 +27,12 @@ on:
           - 'true'
           - 'false'
 
+      app_name:
+        description: 'App Name (optional)'
+        required: false
+        default: ''
+        type: string
+
 jobs:
   build-android:
     name: Android CI/CD
@@ -144,12 +150,27 @@ jobs:
           echo "VERSION_NAME=$NEXT_VERSION_NAME" >> $GITHUB_ENV
           echo "Updated VERSION_CODE=$NEXT_VERSION and VERSION_NAME=$NEXT_VERSION_NAME"
 
+      - name: Update App Name in strings.xml (if provided)
+        run: |
+          APP_NAME="${{ github.event.inputs.app_name }}"
+          STRINGS_FILE="android/app/src/main/res/values/strings.xml"
+
+          if [ -n "$APP_NAME" ]; then
+            echo "Updating app name in strings.xml to: $APP_NAME"
+            sed -i "s|<string name=\"app_name\">.*</string>|<string name=\"app_name\">$APP_NAME</string>|" "$STRINGS_FILE"
+          else
+            echo "No app_name provided. Skipping app name update."
+          fi
+
       - name: Commit updated VERSION_CODE and VERSION_NAME to Git
         run: |
           git config --global user.name 'salonititps'
           git config --global user.email 'salonit@itpathsolutions.com'
+
           git add android/gradle.properties
-          git commit -m "CI: Auto-increment VERSION_CODE to $VERSION_CODE [skip ci]" || echo "No changes to commit."
+          git add android/app/src/main/res/values/strings.xml
+
+          git commit -m "CI: Updated app name and VERSION_CODE=$VERSION_CODE [skip ci]" || echo "No changes to commit."
           git push origin HEAD:${{ github.ref }}
 
   #     - name: Build Debug APK
