@@ -195,15 +195,50 @@ jobs:
             --groups release-testers \
             --release-notes "Release build from GitHub Actions for ${{ github.event.inputs.environment }}"
 
-      - name: Rename APKs with project name and version
-        run: |
-          # Extract namespace, remove 'com.', and get project name
-          NAMESPACE=$(grep -oP 'namespace\s+"[^"]+"' android/app/build.gradle | cut -d'"' -f2)
-          PROJECT_NAME=$(echo "$NAMESPACE" | sed 's/^com\.//')  # removes 'com.' prefix
+      # - name: Rename APKs with project name and version
+      #   run: |
+      #     # Extract namespace, remove 'com.', and get project name
+      #     NAMESPACE=$(grep -oP 'namespace\s+"[^"]+"' android/app/build.gradle | cut -d'"' -f2)
+      #     PROJECT_NAME=$(echo "$NAMESPACE" | sed 's/^com\.//')  # removes 'com.' prefix
 
-          # Extract versionName and format it (1.2.3 → 1_2_3)
+      #     # Extract versionName and format it (1.2.3 → 1_2_3)
+      #     VERSION_NAME=$(grep versionName android/app/build.gradle | head -1 | cut -d\" -f2 | tr '.' '_')
+
+      #     DEBUG_SRC="android/app/build/outputs/apk/debug/app-debug.apk"
+      #     RELEASE_SRC="android/app/build/outputs/apk/release/app-release.apk"
+
+      #     DEBUG_DEST="android/app/build/outputs/apk/debug/${PROJECT_NAME}_debug_${VERSION_NAME}.apk"
+      #     RELEASE_DEST="android/app/build/outputs/apk/release/${PROJECT_NAME}_release_${VERSION_NAME}.apk"
+
+      #     mv "$DEBUG_SRC" "$DEBUG_DEST"
+      #     mv "$RELEASE_SRC" "$RELEASE_DEST"
+
+      #     echo "DEBUG_DEST=$DEBUG_DEST" >> $GITHUB_ENV
+      #     echo "RELEASE_DEST=$RELEASE_DEST" >> $GITHUB_ENV
+
+      # - name: Upload Renamed APKs as Artifacts
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: APKs
+      #     path: |
+      #       ${{ env.DEBUG_DEST }}
+      #       ${{ env.RELEASE_DEST }}
+
+      - name: Extract project name and version
+        run: |
+          # Extract namespace from build.gradle and strip 'com.' if present
+          NAMESPACE=$(grep -oP 'namespace\s+"[^"]+"' android/app/build.gradle | cut -d'"' -f2)
+          PROJECT_NAME=$(echo "$NAMESPACE" | sed 's/^com\.//')
+
+          # Extract versionName and format it (e.g., 2.0.7 → 2_0_7)
           VERSION_NAME=$(grep versionName android/app/build.gradle | head -1 | cut -d\" -f2 | tr '.' '_')
 
+          # Export to GitHub environment for later use
+          echo "PROJECT_NAME=$PROJECT_NAME" >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+
+      - name: Rename APKs with project name and version
+        run: |
           DEBUG_SRC="android/app/build/outputs/apk/debug/app-debug.apk"
           RELEASE_SRC="android/app/build/outputs/apk/release/app-release.apk"
 
@@ -219,15 +254,7 @@ jobs:
       - name: Upload Renamed APKs as Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: APKs
-          path: |
-            ${{ env.DEBUG_DEST }}
-            ${{ env.RELEASE_DEST }}
-
-      - name: Upload Renamed APKs as Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: APKs
+          name: APKs_${{ env.VERSION_NAME }}_${{ env.PROJECT_NAME }}
           path: |
             ${{ env.DEBUG_DEST }}
             ${{ env.RELEASE_DEST }}
