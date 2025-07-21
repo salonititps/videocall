@@ -118,31 +118,28 @@ jobs:
           CURRENT_VERSION=$(grep '^VERSION_CODE=' "$FILE" | cut -d'=' -f2)
           NEXT_VERSION=$((CURRENT_VERSION + 1))
 
-          # Read current VERSION_NAME
+          # Read and split current VERSION_NAME
           CURRENT_VERSION_NAME=$(grep '^VERSION_NAME=' "$FILE" | cut -d'=' -f2)
-
-          # Split VERSION_NAME into major, minor, patch
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION_NAME"
 
-          # Logic to bump PATCH version (e.g., 1.0.0 → 1.0.1, then 1.0.2, ..., 1.0.9, 1.0.10, 1.1.0, etc.)
+          # Increment logic: bump PATCH first
           PATCH=$((PATCH + 1))
-          if [ "$PATCH" -gt 9 ]; then
+          if [ "$PATCH" -gt 10 ]; then
             PATCH=0
             MINOR=$((MINOR + 1))
-            if [ "$MINOR" -gt 9 ]; then
+            if [ "$MINOR" -gt 10 ]; then
               MINOR=0
               MAJOR=$((MAJOR + 1))
             fi
           fi
 
-          # Construct new version name
           NEXT_VERSION_NAME="${MAJOR}.${MINOR}.${PATCH}"
 
           # Update gradle.properties
           sed -i "s/^VERSION_CODE=.*/VERSION_CODE=$NEXT_VERSION/" "$FILE"
           sed -i "s/^VERSION_NAME=.*/VERSION_NAME=$NEXT_VERSION_NAME/" "$FILE"
 
-          # Export to GitHub Actions env
+          # Export to GitHub env
           echo "VERSION_CODE=$NEXT_VERSION" >> $GITHUB_ENV
           echo "VERSION_NAME=$NEXT_VERSION_NAME" >> $GITHUB_ENV
           echo "Updated VERSION_CODE=$NEXT_VERSION and VERSION_NAME=$NEXT_VERSION_NAME"
