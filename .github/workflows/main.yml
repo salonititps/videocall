@@ -104,17 +104,7 @@ jobs:
           #   echo "RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}"
           # } >> android/gradle.properties
 
-      # - name: Update VERSION_CODE and VERSION_NAME
-      #   id: versioning
-      #   run: |
-      #     FILE="android/gradle.properties"
-      #     CURRENT_VERSION=$(grep '^VERSION_CODE=' "$FILE" | cut -d'=' -f2)
-      #     NEXT_VERSION=$((CURRENT_VERSION + 1))
-      #     sed -i "s/^VERSION_CODE=.*/VERSION_CODE=$NEXT_VERSION/" "$FILE"
-      #     sed -i "s/^VERSION_NAME=.*/VERSION_NAME=1.0.0/" "$FILE"
-      #     echo "VERSION_CODE=$NEXT_VERSION" >> $GITHUB_ENV
-      #     echo "Updated VERSION_CODE=$NEXT_VERSION and VERSION_NAME=1.0.0"
-
+      # Auto change version code and version name
       - name: Update VERSION_CODE and VERSION_NAME
         id: versioning
         run: |
@@ -150,6 +140,7 @@ jobs:
           echo "VERSION_NAME=$NEXT_VERSION_NAME" >> $GITHUB_ENV
           echo "Updated VERSION_CODE=$NEXT_VERSION and VERSION_NAME=$NEXT_VERSION_NAME"
 
+      # Auto change application name
       - name: Update App Name in strings.xml (if provided)
         run: |
           APP_NAME="${{ github.event.inputs.app_name }}"
@@ -162,6 +153,7 @@ jobs:
             echo "No app_name provided. Skipping app name update."
           fi
 
+      # Pushed changes to repo
       - name: Commit updated VERSION_CODE and VERSION_NAME to Git
         run: |
           git config --global user.name 'salonititps'
@@ -173,45 +165,45 @@ jobs:
           git commit -m "CI: Updated app name and VERSION_CODE=$VERSION_CODE [skip ci]" || echo "No changes to commit."
           git push origin HEAD:${{ github.ref }}
 
-  #     - name: Build Debug APK
-  #       run: |
-  #         cd android
-  #         ./gradlew assembleDebug
+      - name: Build Debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug
 
-  #     - name: Build Release APK
-  #       run: |
-  #         cd android
-  #         ./gradlew assembleRelease
+      - name: Build Release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease
 
-  #     - name: Install Firebase CLI
-  #       if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
-  #       run: npm install -g firebase-tools
+      - name: Install Firebase CLI
+        if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+        run: npm install -g firebase-tools
 
-  #     - name: Upload Debug APK to Firebase (Debug Testers)
-  #       if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
-  #       run: |
-  #         firebase appdistribution:distribute android/app/build/outputs/apk/debug/app-debug.apk \
-  #           --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
-  #           --token ${{ secrets.FIREBASE_TOKEN }} \
-  #           --groups debug-testers \
-  #           --release-notes "Debug build from GitHub Actions for ${{ github.event.inputs.environment }}"
+      - name: Upload Debug APK to Firebase (Debug Testers)
+        if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+        run: |
+          firebase appdistribution:distribute android/app/build/outputs/apk/debug/app-debug.apk \
+            --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
+            --token ${{ secrets.FIREBASE_TOKEN }} \
+            --groups debug-testers \
+            --release-notes "Debug build from GitHub Actions for ${{ github.event.inputs.environment }}"
 
-  #     - name: Upload Release APK to Firebase (Release Testers)
-  #       if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
-  #       run: |
-  #         firebase appdistribution:distribute android/app/build/outputs/apk/release/app-release.apk \
-  #           --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
-  #           --token ${{ secrets.FIREBASE_TOKEN }} \
-  #           --groups release-testers \
-  #           --release-notes "Release build from GitHub Actions for ${{ github.event.inputs.environment }}"
+      - name: Upload Release APK to Firebase (Release Testers)
+        if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+        run: |
+          firebase appdistribution:distribute android/app/build/outputs/apk/release/app-release.apk \
+            --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
+            --token ${{ secrets.FIREBASE_TOKEN }} \
+            --groups release-testers \
+            --release-notes "Release build from GitHub Actions for ${{ github.event.inputs.environment }}"
 
-  #     - name: Upload APK Artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: APKs
-  #         path: |
-  #           android/app/build/outputs/apk/debug/app-debug.apk
-  #           android/app/build/outputs/apk/release/app-release.apk
+      - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: APKs
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/apk/release/app-release.apk
 
   # build-ios:
   #   name: iOS CI/CD

@@ -162,11 +162,15 @@
 
 import {View, Text, Alert} from 'react-native';
 import React, {useEffect} from 'react';
+import DeviceInfo from 'react-native-device-info';
+
 import {BASE_URL} from '@env';
 
 const App = () => {
   useEffect(() => {
-    Alert.alert(BASE_URL);
+    Alert.alert(
+      `${BASE_URL} , ${DeviceInfo.getVersion()} , ${DeviceInfo.getBuildNumber()}`,
+    );
   }, []);
   return (
     <View>
