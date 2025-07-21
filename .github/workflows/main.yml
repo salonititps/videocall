@@ -195,12 +195,14 @@ jobs:
             --groups release-testers \
             --release-notes "Release build from GitHub Actions for ${{ github.event.inputs.environment }}"
 
-      - name: Rename APKs with namespace and version
+      - name: Rename APKs with project name and version
         run: |
-          # Extract 'videocalling' from: namespace "com.videocalling"
+          # Extract namespace, remove 'com.', and get project name
           NAMESPACE=$(grep -oP 'namespace\s+"[^"]+"' android/app/build.gradle | cut -d'"' -f2)
-          PROJECT_NAME=$(basename "$NAMESPACE")  # e.g., videocalling
-          VERSION_NAME="${{ env.VERSION_NAME }}"  # Make sure VERSION_NAME is set earlier in workflow
+          PROJECT_NAME=$(echo "$NAMESPACE" | sed 's/^com\.//')  # removes 'com.' prefix
+
+          # Extract versionName and format it (1.2.3 → 1_2_3)
+          VERSION_NAME=$(grep versionName android/app/build.gradle | head -1 | cut -d\" -f2 | tr '.' '_')
 
           DEBUG_SRC="android/app/build/outputs/apk/debug/app-debug.apk"
           RELEASE_SRC="android/app/build/outputs/apk/release/app-release.apk"
@@ -213,6 +215,14 @@ jobs:
 
           echo "DEBUG_DEST=$DEBUG_DEST" >> $GITHUB_ENV
           echo "RELEASE_DEST=$RELEASE_DEST" >> $GITHUB_ENV
+
+      - name: Upload Renamed APKs as Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: APKs
+          path: |
+            ${{ env.DEBUG_DEST }}
+            ${{ env.RELEASE_DEST }}
 
       - name: Upload Renamed APKs as Artifacts
         uses: actions/upload-artifact@v4
