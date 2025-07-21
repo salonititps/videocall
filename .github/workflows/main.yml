@@ -382,7 +382,7 @@ jobs:
   #           --groups ios-testers \
   #           --release-notes "iOS build from GitHub Actions for ${{ github.event.inputs.environment }}"
 
-build-ios:
+  build-ios:
   name: iOS Simulator Build
   runs-on: macos-latest
   needs: build-android
