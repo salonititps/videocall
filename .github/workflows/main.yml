@@ -85,159 +85,142 @@ jobs:
           mkdir -p android/app
           echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > android/app/debug.keystore
 
-      # # Add release.keystore
-      # - name: Setup Release Keystore
-      #   run: |
-      #     mkdir -p android/app
-      #     echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/app/videocall.keystore
-
-      #     if [ -f android/app/videocall.keystore ]; then
-      #       echo "videocall.keystore created: $(du -h android/app/videocall.keystore | cut -f1)"
-      #     else
-      #       echo "Failed to create videocall.keystore!"
-      #       exit 1
-      #     fi
-
-      - name: Setup Release Keystore (auto-detect non-debug keystore)
+      # Add release.keystore
+      - name: Setup Release Keystore
         run: |
           mkdir -p android/app
+          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/app/videocall.keystore
 
-          # Find all keystore files
-          KEYSTORE_FILES=($(find android/app -maxdepth 1 -name "*.keystore" -exec basename {} \;))
-
-          if [ ${#KEYSTORE_FILES[@]} -eq 0 ]; then
-            echo "❌ No .keystore file found in android/app/"
-            exit 1
-          fi
-
-          # Select release keystore if possible
-          SELECTED_KEYSTORE=""
-          for file in "${KEYSTORE_FILES[@]}"; do
-            if [[ "$file" != "debug.keystore" ]]; then
-              SELECTED_KEYSTORE="$file"
-              break
-            fi
-          done
-
-          # If no non-debug keystore found, fallback to debug.keystore
-          if [ -z "$SELECTED_KEYSTORE" ]; then
-            SELECTED_KEYSTORE="debug.keystore"
-          fi
-
-          echo "📦 Selected keystore file: $SELECTED_KEYSTORE"
-          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > "android/app/$SELECTED_KEYSTORE"
-
-          if [ -f "android/app/$SELECTED_KEYSTORE" ]; then
-            echo "✅ $SELECTED_KEYSTORE created successfully. Size: $(du -h android/app/$SELECTED_KEYSTORE | cut -f1)"
+          if [ -f android/app/videocall.keystore ]; then
+            echo "videocall.keystore created: $(du -h android/app/videocall.keystore | cut -f1)"
           else
-            echo "❌ Failed to create $SELECTED_KEYSTORE!"
+            echo "Failed to create videocall.keystore!"
             exit 1
           fi
 
-      # # Auto change version code and version name
-      # - name: Update VERSION_CODE and VERSION_NAME
-      #   id: versioning
-      #   run: |
-      #     FILE="android/gradle.properties"
+      # Auto change version code and version name
+      - name: Update VERSION_CODE and VERSION_NAME
+        id: versioning
+        run: |
+          FILE="android/gradle.properties"
 
-      #     # Read current VERSION_CODE
-      #     CURRENT_VERSION=$(grep '^VERSION_CODE=' "$FILE" | cut -d'=' -f2)
-      #     NEXT_VERSION=$((CURRENT_VERSION + 1))
+          # Read current VERSION_CODE
+          CURRENT_VERSION=$(grep '^VERSION_CODE=' "$FILE" | cut -d'=' -f2)
+          NEXT_VERSION=$((CURRENT_VERSION + 1))
 
-      #     # Read and split current VERSION_NAME
-      #     CURRENT_VERSION_NAME=$(grep '^VERSION_NAME=' "$FILE" | cut -d'=' -f2)
-      #     IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION_NAME"
+          # Read and split current VERSION_NAME
+          CURRENT_VERSION_NAME=$(grep '^VERSION_NAME=' "$FILE" | cut -d'=' -f2)
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION_NAME"
 
-      #     # Increment logic: bump PATCH first
-      #     PATCH=$((PATCH + 1))
-      #     if [ "$PATCH" -gt 10 ]; then
-      #       PATCH=0
-      #       MINOR=$((MINOR + 1))
-      #       if [ "$MINOR" -gt 10 ]; then
-      #         MINOR=0
-      #         MAJOR=$((MAJOR + 1))
-      #       fi
-      #     fi
+          # Increment logic: bump PATCH first
+          PATCH=$((PATCH + 1))
+          if [ "$PATCH" -gt 10 ]; then
+            PATCH=0
+            MINOR=$((MINOR + 1))
+            if [ "$MINOR" -gt 10 ]; then
+              MINOR=0
+              MAJOR=$((MAJOR + 1))
+            fi
+          fi
 
-      #     NEXT_VERSION_NAME="${MAJOR}.${MINOR}.${PATCH}"
+          NEXT_VERSION_NAME="${MAJOR}.${MINOR}.${PATCH}"
 
-      #     # Update gradle.properties
-      #     sed -i "s/^VERSION_CODE=.*/VERSION_CODE=$NEXT_VERSION/" "$FILE"
-      #     sed -i "s/^VERSION_NAME=.*/VERSION_NAME=$NEXT_VERSION_NAME/" "$FILE"
+          # Update gradle.properties
+          sed -i "s/^VERSION_CODE=.*/VERSION_CODE=$NEXT_VERSION/" "$FILE"
+          sed -i "s/^VERSION_NAME=.*/VERSION_NAME=$NEXT_VERSION_NAME/" "$FILE"
 
-      #     # Export to GitHub env
-      #     echo "VERSION_CODE=$NEXT_VERSION" >> $GITHUB_ENV
-      #     echo "VERSION_NAME=$NEXT_VERSION_NAME" >> $GITHUB_ENV
-      #     echo "Updated VERSION_CODE=$NEXT_VERSION and VERSION_NAME=$NEXT_VERSION_NAME"
+          # Export to GitHub env
+          echo "VERSION_CODE=$NEXT_VERSION" >> $GITHUB_ENV
+          echo "VERSION_NAME=$NEXT_VERSION_NAME" >> $GITHUB_ENV
+          echo "Updated VERSION_CODE=$NEXT_VERSION and VERSION_NAME=$NEXT_VERSION_NAME"
 
-  #     # Auto change application name
-  #     - name: Update App Name in strings.xml (if provided)
-  #       run: |
-  #         APP_NAME="${{ github.event.inputs.app_name }}"
-  #         STRINGS_FILE="android/app/src/main/res/values/strings.xml"
+      # Auto change application name
+      - name: Update App Name in strings.xml (if provided)
+        run: |
+          APP_NAME="${{ github.event.inputs.app_name }}"
+          STRINGS_FILE="android/app/src/main/res/values/strings.xml"
 
-  #         if [ -n "$APP_NAME" ]; then
-  #           echo "Updating app name in strings.xml to: $APP_NAME"
-  #           sed -i "s|<string name=\"app_name\">.*</string>|<string name=\"app_name\">$APP_NAME</string>|" "$STRINGS_FILE"
-  #         else
-  #           echo "No app_name provided. Skipping app name update."
-  #         fi
+          if [ -n "$APP_NAME" ]; then
+            echo "Updating app name in strings.xml to: $APP_NAME"
+            sed -i "s|<string name=\"app_name\">.*</string>|<string name=\"app_name\">$APP_NAME</string>|" "$STRINGS_FILE"
+          else
+            echo "No app_name provided. Skipping app name update."
+          fi
 
-  #     # Pushed changes to repo
-  #     - name: Commit updated VERSION_CODE and VERSION_NAME to Git
-  #       run: |
-  #         git config --global user.name 'salonititps'
-  #         git config --global user.email 'salonit@itpathsolutions.com'
+      # Pushed changes to repo
+      - name: Commit updated VERSION_CODE and VERSION_NAME to Git
+        run: |
+          git config --global user.name 'salonititps'
+          git config --global user.email 'salonit@itpathsolutions.com'
 
-  #         git add android/gradle.properties
-  #         git add android/app/src/main/res/values/strings.xml
+          git add android/gradle.properties
+          git add android/app/src/main/res/values/strings.xml
 
-  #         git commit -m "CI: Updated app name and VERSION_CODE=$VERSION_CODE [skip ci]" || echo "No changes to commit."
-  #         git push origin HEAD:${{ github.ref }}
+          git commit -m "CI: Updated app name and VERSION_CODE=$VERSION_CODE [skip ci]" || echo "No changes to commit."
+          git push origin HEAD:${{ github.ref }}
 
-  #     - name: Build Debug APK
-  #       run: |
-  #         cd android
-  #         ./gradlew assembleDebug
+      - name: Build Debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug
 
-  #     - name: Build Release APK
-  #       run: |
-  #         cd android
-  #         ./gradlew assembleRelease
-  #       # env:
-  #       #   RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-  #       #   RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-  #       #   RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+      - name: Build Release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease
+        # env:
+        #   RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        #   RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        #   RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
 
-  #     - name: Install Firebase CLI
-  #       if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
-  #       run: npm install -g firebase-tools
+      - name: Install Firebase CLI
+        if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+        run: npm install -g firebase-tools
 
-  #     - name: Upload Debug APK to Firebase (Debug Testers)
-  #       if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
-  #       run: |
-  #         firebase appdistribution:distribute android/app/build/outputs/apk/debug/app-debug.apk \
-  #           --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
-  #           --token ${{ secrets.FIREBASE_TOKEN }} \
-  #           --groups debug-testers \
-  #           --release-notes "Debug build from GitHub Actions for ${{ github.event.inputs.environment }}"
+      - name: Upload Debug APK to Firebase (Debug Testers)
+        if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+        run: |
+          firebase appdistribution:distribute android/app/build/outputs/apk/debug/app-debug.apk \
+            --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
+            --token ${{ secrets.FIREBASE_TOKEN }} \
+            --groups debug-testers \
+            --release-notes "Debug build from GitHub Actions for ${{ github.event.inputs.environment }}"
 
-  #     - name: Upload Release APK to Firebase (Release Testers)
-  #       if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
-  #       run: |
-  #         firebase appdistribution:distribute android/app/build/outputs/apk/release/app-release.apk \
-  #           --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
-  #           --token ${{ secrets.FIREBASE_TOKEN }} \
-  #           --groups release-testers \
-  #           --release-notes "Release build from GitHub Actions for ${{ github.event.inputs.environment }}"
+      - name: Upload Release APK to Firebase (Release Testers)
+        if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+        run: |
+          firebase appdistribution:distribute android/app/build/outputs/apk/release/app-release.apk \
+            --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
+            --token ${{ secrets.FIREBASE_TOKEN }} \
+            --groups release-testers \
+            --release-notes "Release build from GitHub Actions for ${{ github.event.inputs.environment }}"
 
-  #     - name: Upload APK Artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: APKs
-  #         path: |
-  #           android/app/build/outputs/apk/debug/app-debug.apk
-  #           android/app/build/outputs/apk/release/app-release.apk
+      - name: Rename APKs with namespace and version
+        run: |
+          # Extract 'videocalling' from: namespace "com.videocalling"
+          NAMESPACE=$(grep -oP 'namespace\s+"[^"]+"' android/app/build.gradle | cut -d'"' -f2)
+          PROJECT_NAME=$(basename "$NAMESPACE")  # e.g., videocalling
+          VERSION_NAME="${{ env.VERSION_NAME }}"  # Make sure VERSION_NAME is set earlier in workflow
+
+          DEBUG_SRC="android/app/build/outputs/apk/debug/app-debug.apk"
+          RELEASE_SRC="android/app/build/outputs/apk/release/app-release.apk"
+
+          DEBUG_DEST="android/app/build/outputs/apk/debug/${PROJECT_NAME}_debug_${VERSION_NAME}.apk"
+          RELEASE_DEST="android/app/build/outputs/apk/release/${PROJECT_NAME}_release_${VERSION_NAME}.apk"
+
+          mv "$DEBUG_SRC" "$DEBUG_DEST"
+          mv "$RELEASE_SRC" "$RELEASE_DEST"
+
+          echo "DEBUG_DEST=$DEBUG_DEST" >> $GITHUB_ENV
+          echo "RELEASE_DEST=$RELEASE_DEST" >> $GITHUB_ENV
+
+      - name: Upload Renamed APKs as Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: APKs
+          path: |
+            ${{ env.DEBUG_DEST }}
+            ${{ env.RELEASE_DEST }}
 
   # build-ios:
   #   name: iOS CI/CD
