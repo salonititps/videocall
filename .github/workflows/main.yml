@@ -279,27 +279,6 @@ jobs:
         env:
           ENVIRONMENT: ${{ github.event.inputs.environment }}
 
-      - name: Update App Name in Info.plist (if provided)
-        run: |
-          APP_NAME="${{ github.event.inputs.app_name }}"
-          INFO_PLIST="ios/VideoCalling/Info.plist"
-
-          if [ -n "$APP_NAME" ]; then
-            echo "Updating app name in Info.plist to: $APP_NAME"
-            /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $APP_NAME" "$INFO_PLIST"
-            /usr/libexec/PlistBuddy -c "Set :CFBundleName $APP_NAME" "$INFO_PLIST"
-          else
-            echo "No app_name provided. Skipping app name update."
-          fi
-
-      - name: Commit app name update (if any)
-        run: |
-          git config --global user.name 'salonititps'
-          git config --global user.email 'salonit@itpathsolutions.com'
-          git add ios/VideoCalling/Info.plist
-          git commit -m "CI: Updated iOS app name [skip ci]" || echo "No changes to commit."
-          git push origin HEAD:${{ github.ref }}
-
       - name: Build iOS App (Simulator Debug)
         run: |
           cd ios
