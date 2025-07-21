@@ -250,15 +250,23 @@ jobs:
       - name: Install Dependencies
         uses: bahmutov/npm-install@v1
 
+      # 4. Setup Ruby
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
 
+      # 5. Install CocoaPods
       - name: Install CocoaPods
         run: sudo gem install cocoapods
 
-      - name: Install Pods
+      # 6. Fix Podfile deployment target (iOS 12.0+ is minimum for Xcode 15+)
+      - name: Patch Podfile for iOS 12.0 Minimum
+        run: |
+          sed -i '' 's/PLATFORM :ios, .*/PLATFORM :ios, '12.0'/' ios/Podfile
+
+      # 7. Install iOS Pods
+      - name: Install iOS Pods
         run: cd ios && pod install
 
       # Set environment file (optional but included as in original)
