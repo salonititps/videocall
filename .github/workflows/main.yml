@@ -92,6 +92,13 @@ jobs:
           mkdir -p android/app
           echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > android/app/debug.keystore
 
+          if [ -f android/app/debug.keystore ]; then
+            echo "debug.keystore created: $(du -h android/app/debug.keystore | cut -f1)"
+          else
+            echo "Failed to create debug.keystore!"
+            exit 1
+          fi
+
       # Add release.keystore
       - name: Setup Release Keystore
         run: |
