@@ -13,19 +13,26 @@ on:
         description: 'Environment for build'
         required: true
         default: 'dev'
-        type: choice
+        type: choice # string, choice, boolean, environment
         options:
           - dev
           - staging
           - production
+
+      # distribute_to_firebase:
+      #   description: 'Firebase App Distribution'
+      #   required: false
+      #   default: 'false'
+      #   type: choice
+      #   options:
+      #     - 'true'
+      #     - 'false'
+
       distribute_to_firebase:
-        description: 'Firebase App Distribution'
+        description: 'Distribute build to Firebase App Distribution?'
         required: false
         default: 'false'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
+        type: boolean
 
       app_name:
         description: 'App Name (optional)'
@@ -159,82 +166,83 @@ jobs:
           git commit -m "CI: Updated app name and VERSION_CODE=$VERSION_CODE [skip ci]" || echo "No changes to commit."
           git push origin HEAD:${{ github.ref }}
 
-      # - name: Build Debug APK
-      #   run: |
-      #     cd android
-      #     ./gradlew assembleDebug
+      - name: Build Debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug
 
-      # - name: Build Release APK
-      #   run: |
-      #     cd android
-      #     ./gradlew assembleRelease
-      #   # env:
-      #   #   RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-      #   #   RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-      #   #   RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+      - name: Build Release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease
+        # env:
+        #   RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        #   RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        #   RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
 
-      # - name: Install Firebase CLI
-      #   if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
-      #   run: npm install -g firebase-tools
+      - name: Install Firebase CLI
+        if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+        run: npm install -g firebase-tools
 
-      # - name: Upload Debug APK to Firebase (Debug Testers)
-      #   if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
-      #   run: |
-      #     firebase appdistribution:distribute android/app/build/outputs/apk/debug/app-debug.apk \
-      #       --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
-      #       --token ${{ secrets.FIREBASE_TOKEN }} \
-      #       --groups debug-testers \
-      #       --release-notes "Debug build from GitHub Actions for ${{ github.event.inputs.environment }}"
+      - name: Upload Debug APK to Firebase (Debug Testers)
+        if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+        run: |
+          firebase appdistribution:distribute android/app/build/outputs/apk/debug/app-debug.apk \
+            --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
+            --token ${{ secrets.FIREBASE_TOKEN }} \
+            --groups debug-testers \
+            --release-notes "Debug build from GitHub Actions for ${{ github.event.inputs.environment }}"
 
-      # - name: Upload Release APK to Firebase (Release Testers)
-      #   if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
-      #   run: |
-      #     firebase appdistribution:distribute android/app/build/outputs/apk/release/app-release.apk \
-      #       --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
-      #       --token ${{ secrets.FIREBASE_TOKEN }} \
-      #       --groups release-testers \
-      #       --release-notes "Release build from GitHub Actions for ${{ github.event.inputs.environment }}"
+      - name: Upload Release APK to Firebase (Release Testers)
+        if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+        run: |
+          firebase appdistribution:distribute android/app/build/outputs/apk/release/app-release.apk \
+            --app 1:167074286498:android:34b05a46f0dbbfe41700fb \
+            --token ${{ secrets.FIREBASE_TOKEN }} \
+            --groups release-testers \
+            --release-notes "Release build from GitHub Actions for ${{ github.event.inputs.environment }}"
 
-      # # Extract project name and version (from gradle.properties)
-      # - name: Extract project name and version
-      #   run: |
-      #     # Extract namespace from build.gradle and strip 'com.' if present
-      #     NAMESPACE=$(grep -oP 'namespace\s+"[^"]+"' android/app/build.gradle | cut -d'"' -f2)
-      #     PROJECT_NAME=$(echo "$NAMESPACE" | sed 's/^com\.//')
+      # Extract project name and version (from gradle.properties)
+      - name: Extract project name and version
+        run: |
+          # Extract namespace from build.gradle and strip 'com.' if present
+          NAMESPACE=$(grep -oP 'namespace\s+"[^"]+"' android/app/build.gradle | cut -d'"' -f2)
+          PROJECT_NAME=$(echo "$NAMESPACE" | sed 's/^com\.//')
 
-      #     # Get version name from gradle.properties and convert to 1_0_1 format
-      #     VERSION_NAME=$(grep '^VERSION_NAME=' android/gradle.properties | cut -d'=' -f2)
-      #     VERSION_NAME_UNDERSCORE=$(echo "$VERSION_NAME" | tr '.' '_')
+          # Get version name from gradle.properties and convert to 1_0_1 format
+          VERSION_NAME=$(grep '^VERSION_NAME=' android/gradle.properties | cut -d'=' -f2)
+          VERSION_NAME_UNDERSCORE=$(echo "$VERSION_NAME" | tr '.' '_')
 
-      #     # Export to GitHub environment
-      #     echo "PROJECT_NAME=$PROJECT_NAME" >> $GITHUB_ENV
-      #     echo "VERSION_NAME=$VERSION_NAME_UNDERSCORE" >> $GITHUB_ENV
+          # Export to GitHub environment
+          echo "PROJECT_NAME=$PROJECT_NAME" >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME_UNDERSCORE" >> $GITHUB_ENV
 
-      # # Rename APKs using extracted project name and version
-      # - name: Rename APKs with project name and version
-      #   run: |
-      #     DEBUG_SRC="android/app/build/outputs/apk/debug/app-debug.apk"
-      #     RELEASE_SRC="android/app/build/outputs/apk/release/app-release.apk"
+      # Rename APKs using extracted project name and version
+      - name: Rename APKs with project name and version
+        run: |
+          DEBUG_SRC="android/app/build/outputs/apk/debug/app-debug.apk"
+          RELEASE_SRC="android/app/build/outputs/apk/release/app-release.apk"
 
-      #     DEBUG_DEST="android/app/build/outputs/apk/debug/${PROJECT_NAME}_debug_${VERSION_NAME}.apk"
-      #     RELEASE_DEST="android/app/build/outputs/apk/release/${PROJECT_NAME}_release_${VERSION_NAME}.apk"
+          DEBUG_DEST="android/app/build/outputs/apk/debug/${PROJECT_NAME}_debug_${VERSION_NAME}.apk"
+          RELEASE_DEST="android/app/build/outputs/apk/release/${PROJECT_NAME}_release_${VERSION_NAME}.apk"
 
-      #     mv "$DEBUG_SRC" "$DEBUG_DEST"
-      #     mv "$RELEASE_SRC" "$RELEASE_DEST"
+          mv "$DEBUG_SRC" "$DEBUG_DEST"
+          mv "$RELEASE_SRC" "$RELEASE_DEST"
 
-      #     echo "DEBUG_DEST=$DEBUG_DEST" >> $GITHUB_ENV
-      #     echo "RELEASE_DEST=$RELEASE_DEST" >> $GITHUB_ENV
+          echo "DEBUG_DEST=$DEBUG_DEST" >> $GITHUB_ENV
+          echo "RELEASE_DEST=$RELEASE_DEST" >> $GITHUB_ENV
 
-      # # Upload renamed APKs as GitHub Artifacts
-      # - name: Upload Renamed APKs as Artifacts
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: APKs_${{ env.VERSION_NAME }}_${{ env.PROJECT_NAME }}
-      #     path: |
-      #       ${{ env.DEBUG_DEST }}
-      #       ${{ env.RELEASE_DEST }}
+      # Upload renamed APKs as GitHub Artifacts
+      - name: Upload Renamed APKs as Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: APKs_${{ env.VERSION_NAME }}_${{ env.PROJECT_NAME }}
+          path: |
+            ${{ env.DEBUG_DEST }}
+            ${{ env.RELEASE_DEST }}
+
   build-ios:
-    name: iOS Simulator Build
+    name: iOS CI/CD
     runs-on: macos-latest
     needs: build-android
 
@@ -250,26 +258,15 @@ jobs:
       - name: Install Dependencies
         uses: bahmutov/npm-install@v1
 
-      # 4. Setup Ruby
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
 
-      # 5. Install CocoaPods
       - name: Install CocoaPods
         run: sudo gem install cocoapods
 
-      # 6. Fix Podfile deployment target (iOS 12.0+ is minimum for Xcode 15+)
-      - name: Patch Podfile for iOS 12.0 Minimum
-        run: |
-          sed -i '' 's/PLATFORM :ios, .*/PLATFORM :ios, '12.0'/' ios/Podfile
-
-      # 7. Install iOS Pods
-      - name: Install iOS Pods
-        run: cd ios && pod install
-
-      # Set environment file (optional but included as in original)
+      # env setup
       - name: Set up .env file
         run: |
           echo "Selected environment: $ENVIRONMENT"
@@ -284,169 +281,110 @@ jobs:
             echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
             echo ".env file configured for development."
           fi
+
+          grep -E '^(ENV|BASE_URL)=' .env || echo "No public .env variables found."
         env:
           ENVIRONMENT: ${{ github.event.inputs.environment }}
+
+      # Change App name dynamically
+      - name: Update App Name in Info.plist (if provided)
+        run: |
+          APP_NAME="${{ github.event.inputs.app_name }}"
+          INFO_PLIST="ios/VideoCalling/Info.plist"
+
+          if [ -n "$APP_NAME" ]; then
+            echo "Updating app name in Info.plist to: $APP_NAME"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $APP_NAME" "$INFO_PLIST"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleName $APP_NAME" "$INFO_PLIST"
+          else
+            echo "No app_name provided. Skipping app name update."
+          fi
+
+      # - name: Update VERSION_CODE and VERSION_NAME in Xcode project
+      #   run: |
+      #     PLIST_FILE="ios/VideoCalling/Info.plist"
+
+      #     CURRENT_BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$PLIST_FILE")
+      #     NEXT_BUILD_NUMBER=$((CURRENT_BUILD_NUMBER + 1))
+
+      #     CURRENT_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$PLIST_FILE")
+      #     IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+
+      #     PATCH=$((PATCH + 1))
+      #     if [ "$PATCH" -gt 10 ]; then
+      #       PATCH=0
+      #       MINOR=$((MINOR + 1))
+      #       if [ "$MINOR" -gt 10 ]; then
+      #         MINOR=0
+      #         MAJOR=$((MAJOR + 1))
+      #       fi
+      #     fi
+
+      #     NEXT_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+
+      #     /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEXT_BUILD_NUMBER" "$PLIST_FILE"
+      #     /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $NEXT_VERSION" "$PLIST_FILE"
+
+      #     echo "VERSION_CODE=$NEXT_BUILD_NUMBER" >> $GITHUB_ENV
+      #     echo "VERSION_NAME=$NEXT_VERSION" >> $GITHUB_ENV
+      #     echo "Updated VERSION_CODE=$NEXT_BUILD_NUMBER and VERSION_NAME=$NEXT_VERSION"
+
+      - name: Commit version and app name updates (if any)
+        run: |
+          git config --global user.name 'salonititps'
+          git config --global user.email 'salonit@itpathsolutions.com'
+
+          git add ios/YourApp/Info.plist
+
+          git commit -m "CI: Updated iOS app name and version [skip ci]" || echo "No changes to commit."
+          git push origin HEAD:${{ github.ref }}
+
+      - name: Setup iOS Signing (Only for staging/production)
+        if: ${{ github.event.inputs.environment != 'dev' }}
+        run: |
+          mkdir -p ~/certs
+          echo "${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}" | base64 -d > ~/certs/profile.mobileprovision
+          echo "${{ secrets.IOS_CERT_P12_BASE64 }}" | base64 -d > ~/certs/cert.p12
+          echo "${{ secrets.IOS_AUTH_KEY_BASE64 }}" | base64 -d > ~/certs/AuthKey.p8
+          echo "iOS signing files decoded."
+
+      - name: Install Pods
+        run: cd ios && pod install
 
       - name: Build iOS App (Simulator Debug)
         run: |
           cd ios
-          xcodebuild -workspace VideoCalling.xcworkspace \
-                    -scheme VideoCalling \
-                    -sdk iphonesimulator \
-                    -configuration Debug \
-                    -destination 'platform=iOS Simulator,name=iPhone 14' \
-                    -derivedDataPath build
+          xcodebuild -workspace YourApp.xcworkspace \
+            -scheme YourApp \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -derivedDataPath build
 
-      - name: Upload .app for Simulator
+      - name: Build iOS App (Device Release)
+        run: |
+          cd ios
+          xcodebuild -workspace YourApp.xcworkspace \
+            -scheme YourApp \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build
+
+      - name: Upload iOS Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: iOS_Simulator_Debug_App
-          path: ios/build/Build/Products/Debug-iphonesimulator/*.app
+          name: iOS Build
+          path: ios/build
 
-  # build-ios:
-  #   name: iOS CI/CD
-  #   runs-on: macos-latest
-  #   needs: build-android
+      - name: Install Firebase CLI
+        if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+        run: npm install -g firebase-tools
 
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@v4
-
-  #     - name: Set up Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '20'
-
-  #     - name: Install Dependencies
-  #       uses: bahmutov/npm-install@v1
-
-  #     - name: Set up Ruby
-  #       uses: ruby/setup-ruby@v1
-  #       with:
-  #         ruby-version: '3.2'
-
-  #     - name: Install CocoaPods
-  #       run: sudo gem install cocoapods
-
-  #     # env setup
-  #     - name: Set up .env file
-  #       run: |
-  #         echo "Selected environment: $ENVIRONMENT"
-
-  #         if [ "$ENVIRONMENT" = "production" ]; then
-  #           echo "${{ secrets.ENV_PROD_BASE64 }}" | base64 -d > .env
-  #           echo ".env file configured for production."
-  #         elif [ "$ENVIRONMENT" = "staging" ]; then
-  #           echo "${{ secrets.ENV_STAGING_BASE64 }}" | base64 -d > .env
-  #           echo ".env file configured for staging."
-  #         else
-  #           echo "${{ secrets.ENV_DEV_BASE64 }}" | base64 -d > .env
-  #           echo ".env file configured for development."
-  #         fi
-
-  #         grep -E '^(ENV|BASE_URL)=' .env || echo "No public .env variables found."
-  #       env:
-  #         ENVIRONMENT: ${{ github.event.inputs.environment }}
-
-  #     # Change App name dynamically
-  #     - name: Update App Name in Info.plist (if provided)
-  #       run: |
-  #         APP_NAME="${{ github.event.inputs.app_name }}"
-  #         INFO_PLIST="ios/VideoCalling/Info.plist"
-
-  #         if [ -n "$APP_NAME" ]; then
-  #           echo "Updating app name in Info.plist to: $APP_NAME"
-  #           /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $APP_NAME" "$INFO_PLIST"
-  #           /usr/libexec/PlistBuddy -c "Set :CFBundleName $APP_NAME" "$INFO_PLIST"
-  #         else
-  #           echo "No app_name provided. Skipping app name update."
-  #         fi
-
-  #     # - name: Update VERSION_CODE and VERSION_NAME in Xcode project
-  #     #   run: |
-  #     #     PLIST_FILE="ios/VideoCalling/Info.plist"
-
-  #     #     CURRENT_BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$PLIST_FILE")
-  #     #     NEXT_BUILD_NUMBER=$((CURRENT_BUILD_NUMBER + 1))
-
-  #     #     CURRENT_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$PLIST_FILE")
-  #     #     IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
-
-  #     #     PATCH=$((PATCH + 1))
-  #     #     if [ "$PATCH" -gt 10 ]; then
-  #     #       PATCH=0
-  #     #       MINOR=$((MINOR + 1))
-  #     #       if [ "$MINOR" -gt 10 ]; then
-  #     #         MINOR=0
-  #     #         MAJOR=$((MAJOR + 1))
-  #     #       fi
-  #     #     fi
-
-  #     #     NEXT_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-
-  #     #     /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEXT_BUILD_NUMBER" "$PLIST_FILE"
-  #     #     /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $NEXT_VERSION" "$PLIST_FILE"
-
-  #     #     echo "VERSION_CODE=$NEXT_BUILD_NUMBER" >> $GITHUB_ENV
-  #     #     echo "VERSION_NAME=$NEXT_VERSION" >> $GITHUB_ENV
-  #     #     echo "Updated VERSION_CODE=$NEXT_BUILD_NUMBER and VERSION_NAME=$NEXT_VERSION"
-
-  #     - name: Commit version and app name updates (if any)
-  #       run: |
-  #         git config --global user.name 'salonititps'
-  #         git config --global user.email 'salonit@itpathsolutions.com'
-
-  #         git add ios/YourApp/Info.plist
-
-  #         git commit -m "CI: Updated iOS app name and version [skip ci]" || echo "No changes to commit."
-  #         git push origin HEAD:${{ github.ref }}
-
-  #     - name: Setup iOS Signing (Only for staging/production)
-  #       if: ${{ github.event.inputs.environment != 'dev' }}
-  #       run: |
-  #         mkdir -p ~/certs
-  #         echo "${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}" | base64 -d > ~/certs/profile.mobileprovision
-  #         echo "${{ secrets.IOS_CERT_P12_BASE64 }}" | base64 -d > ~/certs/cert.p12
-  #         echo "${{ secrets.IOS_AUTH_KEY_BASE64 }}" | base64 -d > ~/certs/AuthKey.p8
-  #         echo "iOS signing files decoded."
-
-  #     - name: Install Pods
-  #       run: cd ios && pod install
-
-  #     - name: Build iOS App (Simulator Debug)
-  #       run: |
-  #         cd ios
-  #         xcodebuild -workspace YourApp.xcworkspace \
-  #           -scheme YourApp \
-  #           -sdk iphonesimulator \
-  #           -configuration Debug \
-  #           -derivedDataPath build
-
-  #     - name: Build iOS App (Device Release)
-  #       run: |
-  #         cd ios
-  #         xcodebuild -workspace YourApp.xcworkspace \
-  #           -scheme YourApp \
-  #           -sdk iphoneos \
-  #           -configuration Release \
-  #           -derivedDataPath build
-
-  #     - name: Upload iOS Build Artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: iOS Build
-  #         path: ios/build
-
-  #     - name: Install Firebase CLI
-  #       if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
-  #       run: npm install -g firebase-tools
-
-  #     - name: Upload iOS App to Firebase
-  #       if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
-  #       run: |
-  #         IPA_PATH="ios/build/Build/Products/Release-iphoneos/YourApp.ipa"
-  #         firebase appdistribution:distribute "$IPA_PATH" \
-  #           --app your_ios_firebase_app_id \
-  #           --token ${{ secrets.FIREBASE_TOKEN }} \
-  #           --groups ios-testers \
-  #           --release-notes "iOS build from GitHub Actions for ${{ github.event.inputs.environment }}"
+      - name: Upload iOS App to Firebase
+        if: ${{ github.event.inputs.distribute_to_firebase == 'true' }}
+        run: |
+          IPA_PATH="ios/build/Build/Products/Release-iphoneos/YourApp.ipa"
+          firebase appdistribution:distribute "$IPA_PATH" \
+            --app your_ios_firebase_app_id \
+            --token ${{ secrets.FIREBASE_TOKEN }} \
+            --groups ios-testers \
+            --release-notes "iOS build from GitHub Actions for ${{ github.event.inputs.environment }}"

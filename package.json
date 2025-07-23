@@ -26,9 +26,11 @@
     "react-native-gesture-handler": "^2.26.0",
     "react-native-incall-manager": "^4.2.1",
     "react-native-minimize": "^1.0.12",
+    "react-native-ota-hot-update": "^2.3.1",
     "react-native-reanimated": "^3.18.0",
     "react-native-safe-area-context": "^5.5.2",
-    "react-native-svg": "^15.11.2"
+    "react-native-svg": "^15.11.2",
+    "react-native-version-check": "^3.5.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
