@@ -29,7 +29,7 @@ on:
       #     - 'false'
 
       distribute_to_firebase:
-        description: 'Distribute build to Firebase App Distribution?'
+        description: 'Firebase App Distribution?'
         required: false
         default: 'false'
         type: boolean
