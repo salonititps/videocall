@@ -1,6 +1,6 @@
 import React from 'react';
-import {Dimensions, StyleSheet} from 'react-native';
-import {Gesture, GestureDetector} from 'react-native-gesture-handler';
+import { Dimensions, StyleSheet } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,9 +8,9 @@ import Animated, {
   withSpring,
   runOnJS,
 } from 'react-native-reanimated';
-import {moderateHeight, moderateWidth} from '../responsive';
+import { moderateHeight, moderateWidth } from '../../../responsive';
 
-const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface ZoomableImageViewerProps {
   uri: string;
@@ -112,16 +112,16 @@ export const ZoomableImageViewer: React.FC<ZoomableImageViewerProps> = ({
   // Animated style for image transform
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
-      {translateX: translateX.value},
-      {translateY: translateY.value},
-      {scale: scale.value},
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
     ],
   }));
 
   return (
     <GestureDetector gesture={composedGesture}>
       <Animated.Image
-        source={{uri}}
+        source={{ uri }}
         style={[styles.image, animatedStyle]}
         resizeMode="contain"
       />

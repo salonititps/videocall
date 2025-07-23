@@ -1,7 +1,7 @@
-import React, {forwardRef, useImperativeHandle, useRef, memo} from 'react';
-import {View, Text, StyleSheet, Pressable} from 'react-native';
+import React, { forwardRef, useImperativeHandle, useRef, memo } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 
-import {Gesture, GestureDetector} from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -12,7 +12,7 @@ import Animated, {
   FadeOut,
 } from 'react-native-reanimated';
 
-import {moderateHeight, moderateWidth} from '../responsive';
+import { moderateHeight, moderateWidth } from '../../../responsive';
 
 const SWIPE_LIMIT = 120;
 const SWIPE_THRESHOLD = 100;
@@ -22,13 +22,13 @@ export interface SwipeableRowRef {
 }
 
 interface Props {
-  item: {id: string; text: string};
+  item: { id: string; text: string };
   onDelete: (id: string) => void;
   onSwipeStart?: () => void;
 }
 
 const SwipeableRowComponent = (
-  {item, onDelete, onSwipeStart}: Props,
+  { item, onDelete, onSwipeStart }: Props,
   ref: React.Ref<SwipeableRowRef>,
 ) => {
   const translateX = useSharedValue(0); // Current position of the swiped row
@@ -94,7 +94,7 @@ const SwipeableRowComponent = (
   // Apply the horizontal movement to the animated style
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [{translateX: translateX.value}],
+      transform: [{ translateX: translateX.value }],
     };
   });
 
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#ff3b30',
+    backgroundColor: 'skyblue',
     alignItems: 'center',
     paddingHorizontal: moderateWidth(5),
   },

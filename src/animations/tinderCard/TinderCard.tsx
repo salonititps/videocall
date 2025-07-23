@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, { useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -19,13 +19,12 @@ import Animated, {
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
+import { moderateHeight, moderateWidth } from '../../../responsive';
 
-import {moderateHeight, moderateWidth} from '../responsive';
-
-const {width, height} = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 120;
 
-const TinderCard = ({CARDS}) => {
+const TinderCard = ({ CARDS }) => {
   const cards = useRef(CARDS);
   const [visibleIndex, setVisibleIndex] = useState(0); // State to track current visible card
   const currentIndex = useSharedValue(0); // Shared value to sync with Reanimated
@@ -115,10 +114,10 @@ const TinderCard = ({CARDS}) => {
   // Style for top card (animated position + rotation)
   const animatedCardStyle = useAnimatedStyle(() => ({
     transform: [
-      {translateX: translateX.value},
-      {translateY: translateY.value},
-      {rotate: `${rotate.value}deg`},
-      {rotateY: `${flipRotation.value}deg`},
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { rotate: `${rotate.value}deg` },
+      { rotateY: `${flipRotation.value}deg` },
     ],
   }));
 
@@ -148,7 +147,7 @@ const TinderCard = ({CARDS}) => {
   const nextCard = cards.current[visibleIndex + 1];
 
   return (
-    <View style={{flex: 1}}>
+    <View style={{ flex: 1 }}>
       <View style={styles.stackContainer}>
         {currentCard ? (
           <>
@@ -191,7 +190,7 @@ const TinderCard = ({CARDS}) => {
           <TouchableOpacity
             style={styles.button}
             onPress={() => {
-              opacityRight.value = withTiming(1, {duration: 100});
+              opacityRight.value = withTiming(1, { duration: 100 });
               translateX.value = withSpring(width * 1.5, {}, swipeToNextCard);
             }}>
             <Text style={styles.buttonText}>Swipe Right</Text>
@@ -200,7 +199,7 @@ const TinderCard = ({CARDS}) => {
           <TouchableOpacity
             style={styles.button}
             onPress={() => {
-              opacityLeft.value = withTiming(1, {duration: 100});
+              opacityLeft.value = withTiming(1, { duration: 100 });
               translateX.value = withSpring(-width * 1.5, {}, swipeToNextCard);
             }}>
             <Text style={styles.buttonText}>Swipe Left</Text>
@@ -237,11 +236,11 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.15,
     shadowRadius: 10,
-    shadowOffset: {width: 0, height: moderateHeight(1)},
+    shadowOffset: { width: 0, height: moderateHeight(1) },
     backfaceVisibility: 'hidden',
   },
   cardBackStack: {
-    transform: [{scale: 0.95}, {translateY: 15}],
+    transform: [{ scale: 0.95 }, { translateY: 15 }],
     backgroundColor: '#eee',
     zIndex: -1,
   },

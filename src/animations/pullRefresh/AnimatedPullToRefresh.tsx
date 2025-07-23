@@ -1,7 +1,7 @@
-import React, {useRef, useState, memo} from 'react';
-import {View, Text, StyleSheet, StatusBar, PanResponder} from 'react-native';
+import React, { useRef, useState, memo } from 'react';
+import { View, Text, StyleSheet, StatusBar, PanResponder } from 'react-native';
 
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -12,10 +12,9 @@ import Animated, {
   FadeOutDown,
 } from 'react-native-reanimated';
 import LottieView from 'lottie-react-native';
+import { moderateHeight, moderateWidth } from '../../../responsive';
 
-import {moderateHeight, moderateWidth} from '../responsive';
-
-const initialData = Array.from({length: 10}, (_, i) => ({
+const initialData = Array.from({ length: 10 }, (_, i) => ({
   title: `Title ${i + 1}`,
   director: `Director ${i + 1}`,
   year: `20${10 + i}`,
@@ -35,7 +34,7 @@ const AnimatedPullToRefresh = () => {
 
   // Called after refresh animation completes
   const onRefreshComplete = () => {
-    pullY.value = withTiming(0, {duration: 180});
+    pullY.value = withTiming(0, { duration: 180 });
   };
 
   // Actual refresh logic
@@ -61,15 +60,15 @@ const AnimatedPullToRefresh = () => {
         const dy = Math.min(150, Math.max(0, g.dy));
 
         if (dy >= 75) {
-          pullY.value = withTiming(120, {duration: 180});
+          pullY.value = withTiming(120, { duration: 180 });
           runOnJS(triggerRefresh)();
         } else {
-          pullY.value = withTiming(0, {duration: 180});
+          pullY.value = withTiming(0, { duration: 180 });
         }
       },
 
       onPanResponderTerminate: () => {
-        pullY.value = withTiming(0, {duration: 180});
+        pullY.value = withTiming(0, { duration: 180 });
       },
     }),
   ).current;
@@ -83,7 +82,7 @@ const AnimatedPullToRefresh = () => {
 
   // Pull-down animated style
   const pullDownStyle = useAnimatedStyle(() => ({
-    transform: [{translateY: pullY.value}],
+    transform: [{ translateY: pullY.value }],
   }));
 
   // Lottie loader animated style
@@ -94,7 +93,7 @@ const AnimatedPullToRefresh = () => {
   }));
 
   // Render each FlatList item
-  const renderItem = ({item}: {item: (typeof initialData)[0]}) => (
+  const renderItem = ({ item }: { item: (typeof initialData)[0] }) => (
     <Animated.View entering={FadeInUp} exiting={FadeOutDown}>
       <Text style={styles.title}>{item.title}</Text>
       <Text style={styles.subTitle}>{`${item.director} | ${item.year}`}</Text>
@@ -108,11 +107,14 @@ const AnimatedPullToRefresh = () => {
       {/* Lottie loader */}
       <Animated.View style={[styles.loaderContainer, loaderStyle]}>
         <LottieView
-          source={require('../assets/lottie-refresh.json')}
+          source={require('../../../assets/lottie-refresh.json')}
           autoPlay
           loop
           speed={0.5}
-          style={[styles.loader, {paddingTop: insets.top > 0 ? insets.top : 0}]}
+          style={[
+            styles.loader,
+            { paddingTop: insets.top > 0 ? insets.top : 0 },
+          ]}
         />
       </Animated.View>
 
@@ -120,7 +122,7 @@ const AnimatedPullToRefresh = () => {
         style={[
           pullDownStyle,
           styles.pullDownStyles,
-          {paddingTop: Math.max(insets.top, 15)},
+          { paddingTop: Math.max(insets.top, 15) },
         ]}
         {...panResponder.panHandlers}>
         <Animated.FlatList
