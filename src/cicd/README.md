@@ -67,9 +67,9 @@ It’s **environment-aware** (`dev`, `staging`, `production`), supports **manual
 
 2. Convert in base64
 
-   base64 -i .env
-   base64 -i android/app/debug.keystore -o debug.keystore.base64
-   Upload this files in github secrets -> actions -> new repository secret via settings options
+   - base64 -i .env
+   - base64 -i android/app/debug.keystore -o debug.keystore.base64
+   - Upload this files in github secrets -> actions -> new repository secret via settings options
 
 ### 🧱 Workflow Steps Overview
 
@@ -107,8 +107,8 @@ It’s **environment-aware** (`dev`, `staging`, `production`), supports **manual
 
    - Uploads debug and release APKs using **Firebase CLI**
 
-For writing code :
-Go to Actions tab in git hub repo -> select new work flow -> set up new work flow by your self
-Create .yml file in github repo main branch
+**For writing code :**
+- Go to Actions tab in git hub repo -> select new work flow -> set up new work flow by your self
+- Create .yml file in github repo main branch
 
 - **Git repo** : https://github.com/salonititps/videocall.git
