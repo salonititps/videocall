@@ -57,6 +57,20 @@ It’s **environment-aware** (`dev`, `staging`, `production`), supports **manual
 
 ---
 
+1. Firebase login : must have node >= 20
+
+   1. If not firebase then first run below command
+   npm install --global eas-cli
+
+   2. To get firebase token
+   firebase login:ci
+
+2. Convert in base64
+
+   base64 -i .env
+   base64 -i android/app/debug.keystore -o debug.keystore.base64
+   Upload this files in github secrets -> actions -> new repository secret via settings options
+
 ### 🧱 Workflow Steps Overview
 
 1. **Environment Setup**
@@ -92,5 +106,9 @@ It’s **environment-aware** (`dev`, `staging`, `production`), supports **manual
 7. **Firebase App Distribution** _(Optional)_
 
    - Uploads debug and release APKs using **Firebase CLI**
+
+For writing code :
+Go to Actions tab in git hub repo -> select new work flow -> set up new work flow by your self
+Create .yml file in github repo main branch
 
 - **Git repo** : https://github.com/salonititps/videocall.git
